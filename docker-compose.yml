@@ -34,8 +34,9 @@ services:
     restart: unless-stopped
     
     # Security: Run as non-root user (frappe user inside container)
-    # The official ERPNext image already configures this correctly
-    user: "1000:1000"
+    # User ID must match host user for proper file permissions
+    # Configure DOCKER_USER_ID and DOCKER_GROUP_ID in .env file
+    user: "${DOCKER_USER_ID:-1000}:${DOCKER_GROUP_ID:-1000}"
     
     # Network configuration for service communication and reverse proxy
     networks:
@@ -130,7 +131,7 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_frontend
     
     restart: unless-stopped
-    user: "1000:1000"
+    user: "${DOCKER_USER_ID:-1000}:${DOCKER_GROUP_ID:-1000}"
     
     # Frontend only needs access to proxy network and backend communication
     networks:
@@ -207,7 +208,7 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_websocket
     
     restart: unless-stopped
-    user: "1000:1000"
+    user: "${DOCKER_USER_ID:-1000}:${DOCKER_GROUP_ID:-1000}"
     
     networks:
       - erpnext_frontend
@@ -470,7 +471,7 @@ services:
     # Run only when explicitly needed (not automatically restarted)
     restart: "no"
     
-    user: "1000:1000"
+    user: "${DOCKER_USER_ID:-1000}:${DOCKER_GROUP_ID:-1000}"
     
     networks:
       - erpnext_backend

@@ -3,17 +3,36 @@
 ## 📋 Quick Setup Instructions
 
 ### 1. Initial Directory Setup
+
+**⚠️ IMPORTANT**: Before creating directories, read **[SECURITY.md](SECURITY.md)** if:
+- User ID 1000 doesn't exist on your system  
+- You need to use a different port than 8080
+- You want to understand Docker user mapping
+
+**Quick setup (if UID 1000 is available):**
 ```bash
-# Create required directories with proper permissions
+# Create directories with proper permissions
 mkdir -p data/{sites,logs,db,redis_queue}
 sudo chown -R 1000:1000 data/
 chmod -R 755 data/
 ```
 
-**⚠️ Important**: If user ID 1000 doesn't exist on your system or you need to use a different port than 8080, please read **[SECURITY.md](SECURITY.md)** for detailed instructions on:
-- User management and Docker user configuration
-- Secure password generation
-- Port configuration for conflicting applications
+**Custom UID setup (if UID 1000 is not available):**
+```bash
+# 1. Create user and get UID
+sudo useradd -m -s /bin/bash erpnext
+sudo usermod -aG docker erpnext
+USER_UID=$(id -u erpnext)
+
+# 2. Update .env with your user's UID
+cp .env.example .env
+echo "DOCKER_USER_ID=$USER_UID" >> .env
+echo "DOCKER_GROUP_ID=$USER_UID" >> .env
+
+# 3. Create directories as the correct user
+sudo -u erpnext mkdir -p data/{sites,logs,db,redis_queue}
+sudo -u erpnext chmod -R 755 data/
+```
 
 ### 2. Environment Configuration
 ```bash
@@ -32,6 +51,8 @@ nano .env
 - `DB_ROOT_PASSWORD`: Strong password for database root
 - `DB_PASSWORD`: Strong password for application database user
 - `FRONTEND_PORT`: Port for host nginx connection (default 8080, change if conflicts)
+- `DOCKER_USER_ID`: User ID for containers (default 1000, change if UID 1000 unavailable)
+- `DOCKER_GROUP_ID`: Group ID for containers (default 1000, change if needed)
 
 ### 4. Start Services
 ```bash
