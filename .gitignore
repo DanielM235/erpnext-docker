@@ -1,0 +1,201 @@
+# ERPNext Docker Production - GitIgnore Configuration
+# This file ensures sensitive data and temporary files are not committed to version control
+
+# ==============================================
+# SENSITIVE CONFIGURATION FILES
+# ==============================================
+# Environment configuration - contains passwords and secrets
+.env
+.env.local
+.env.production
+.env.staging
+*.env
+
+# SSL certificates and keys - never commit private keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+ssl/
+certs/
+certificates/
+
+# Secrets and credentials
+secrets/
+credentials/
+*.secret
+
+# ==============================================
+# DATA AND LOGS
+# ==============================================
+# Database data - persistent storage should not be in git
+data/
+db_data/
+mysql_data/
+postgres_data/
+mariadb_data/
+
+# Application data and uploads
+sites/
+site_data/
+uploads/
+files/
+attachments/
+
+# Logs - can be large and contain sensitive information
+logs/
+*.log
+*.log.*
+log/
+
+# Backups - can be large and contain sensitive data
+backups/
+backup/
+*.sql
+*.dump
+*.tar.gz
+*.zip
+db_backups/
+
+# ==============================================
+# DOCKER SPECIFIC
+# ==============================================
+# Docker Compose override files for local development
+docker-compose.override.yml
+docker-compose.local.yml
+docker-compose.dev.yml
+
+# Docker build cache and temporary files
+.docker/
+*.dockerfile.swp
+.dockerignore.swp
+
+# ==============================================
+# TEMPORARY AND CACHE FILES
+# ==============================================
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Editor temporary files
+*.swp
+*.swo
+*~
+.vscode/settings.json
+.idea/
+*.sublime-*
+
+# Temporary directories
+tmp/
+temp/
+.tmp/
+.temp/
+
+# Cache directories
+.cache/
+cache/
+node_modules/
+npm-debug.log*
+
+# ==============================================
+# SYSTEM AND RUNTIME FILES
+# ==============================================
+# Process IDs
+*.pid
+pids/
+
+# Runtime data
+lib-cov/
+coverage/
+.grunt/
+.lock-wscript
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# ==============================================
+# MAINTENANCE AND MONITORING
+# ==============================================
+# Maintenance mode files
+maintenance.flag
+.maintenance
+
+# Monitoring and metrics data
+metrics/
+monitoring/
+prometheus/
+grafana/
+
+# Health check temporary files
+.health
+health.check
+
+# ==============================================
+# MISCELLANEOUS
+# ==============================================
+# Documentation build artifacts
+_site/
+.sass-cache/
+.jekyll-metadata
+
+# Package files
+*.tgz
+*.tar.gz
+
+# Python cache (if any Python utilities are added)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# ==============================================
+# PROJECT SPECIFIC EXCLUDES
+# ==============================================
+# Local development configurations
+local.yml
+local.yaml
+development.yml
+
+# Testing and debugging files
+debug.log
+test-results/
+coverage-reports/
+
+# Temporary scripts (unless specifically tracked)
+scripts/temp/
+*.tmp.sh
+
+# Local documentation drafts
+docs/drafts/
+*.draft.md
+
+# ==============================================
+# SECURITY NOTES
+# ==============================================
+# This .gitignore file is designed to protect:
+# 1. Database credentials and API keys
+# 2. SSL certificates and private keys  
+# 3. User data and uploaded files
+# 4. Application logs that may contain sensitive info
+# 5. Backup files with production data
+# 6. Local development configurations
+#
+# Always review before committing to ensure no sensitive
+# data is accidentally included in version control.
+# ==============================================
