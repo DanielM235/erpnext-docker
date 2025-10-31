@@ -40,9 +40,9 @@ This project provides a secure, scalable, and maintainable Docker-based deployme
 
 ## 🚀 Quick Start
 
-### 1. Clone and Setup
+### 1. Setup and Deployment
 ```bash
-# Clone this repository
+# For local development/testing
 git clone <repository-url>
 cd erpnext-docker
 
@@ -52,6 +52,8 @@ cp .env.example .env
 # Edit environment variables
 nano .env
 ```
+
+**📦 For Production Deployment**: See **[DEPLOYMENT.md](DEPLOYMENT.md)** for complete instructions on transferring files from your local Ubuntu 24.10 machine to your Debian 12 production server via SSH.
 
 ### 2. Configure Environment Variables
 Edit the `.env` file with your specific values:
@@ -211,8 +213,14 @@ docker compose -f docker-compose.yml -f docker-compose.debug.yml up -d
 docker compose exec erpnext bash
 ```
 
-## 📚 Additional Resources
+## 📚 Project Documentation
 
+### 📖 Configuration Guides
+- **[SETUP.md](SETUP.md)** - Quick setup and installation guide
+- **[SECURITY.md](SECURITY.md)** - User management, passwords, and port configuration
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Transfer files from local to production server
+
+### 🔗 External Resources
 - [ERPNext Documentation](https://docs.erpnext.com/)
 - [Frappe Docker Guide](https://github.com/frappe/frappe_docker)
 - [Docker Compose Best Practices](https://docs.docker.com/compose/production/)

@@ -36,12 +36,10 @@ services:
     # Security: Run as non-root user (frappe user inside container)
     # User ID must match host user for proper file permissions
     # Configure DOCKER_USER_ID and DOCKER_GROUP_ID in .env file
-    user: "${DOCKER_USER_ID:-1000}:${DOCKER_GROUP_ID:-1000}"
     
     # Network configuration for service communication and reverse proxy
     networks:
-      - erpnext_frontend  # Communication with nginx proxy
-      - erpnext_backend   # Database and cache communication
+      - frappe_network
     
     # Production resource limits to prevent resource exhaustion
     # Adjust based on your server specifications and load requirements
@@ -89,6 +87,9 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       
       # Redis configuration for caching and job queue
       REDIS_CACHE: "redis-cache:6379"
@@ -99,9 +100,9 @@ services:
       DEVELOPER_MODE: ${DEVELOPER_MODE:-0}
       
       # Performance tuning
-      WORKER_CLASS: ${WORKER_CLASS:-sync}
-      WORKERS: ${BACKEND_WORKERS:-4}
-      TIMEOUT: ${BACKEND_TIMEOUT:-300}
+      # WORKER_CLASS: ${WORKER_CLASS:-sync}
+      # WORKERS: ${BACKEND_WORKERS:-4}
+      # TIMEOUT: ${BACKEND_TIMEOUT:-300}
     
     # Service dependencies - ensure infrastructure is ready
     depends_on:
@@ -131,11 +132,10 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_frontend
     
     restart: unless-stopped
-    user: "${DOCKER_USER_ID:-1000}:${DOCKER_GROUP_ID:-1000}"
     
     # Frontend only needs access to proxy network and backend communication
     networks:
-      - erpnext_frontend
+      - frappe_network
     
     # Resource limits for nginx frontend (typically lighter than backend)
     deploy:
@@ -143,13 +143,10 @@ services:
         limits:
           cpus: '${FRONTEND_CPU_LIMIT:-1.0}'
           memory: ${FRONTEND_MEMORY_LIMIT:-1G}
-        reservations:
-          cpus: '${FRONTEND_CPU_RESERVE:-0.25}'
-          memory: ${FRONTEND_MEMORY_RESERVE:-256M}
     
     # Health check for nginx web server
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/method/ping || exit 1"]
+      test: ["CMD-SHELL", "curl -f -H 'Host: ${SITE_NAME}' http://localhost:8080 || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -174,6 +171,10 @@ services:
       # Backend server for reverse proxy
       BACKEND: backend:8000
       SOCKETIO: websocket:9000
+      UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
+      UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
+      UPSTREAM_REAL_IP_RECURSIVE: "off"
+      FRAPPE_SITE_NAME_HEADER: ${SITE_NAME}
       
       # Nginx performance settings
       CLIENT_MAX_BODY_SIZE: ${MAX_UPLOAD_SIZE:-50m}
@@ -186,8 +187,6 @@ services:
     command: ["nginx-entrypoint.sh"]
     
     depends_on:
-      backend:
-        condition: service_healthy
       websocket:
         condition: service_started
     
@@ -208,53 +207,36 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_websocket
     
     restart: unless-stopped
-    user: "${DOCKER_USER_ID:-1000}:${DOCKER_GROUP_ID:-1000}"
     
     networks:
-      - erpnext_frontend
-      - erpnext_backend
+      - frappe_network
     
+    environment:
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-3306}
+      REDIS_CACHE: "redis-cache:6379"
+      REDIS_QUEUE: "redis-queue:6379"
+      REDIS_SOCKETIO: "redis-cache:6379"
+      FRAPPE_SITE_NAME_HEADER: ${SITE_NAME}
+
     deploy:
       resources:
         limits:
           cpus: '${WEBSOCKET_CPU_LIMIT:-0.5}'
           memory: ${WEBSOCKET_MEMORY_LIMIT:-512M}
-        reservations:
-          cpus: '0.1'
-          memory: 128M
-    
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9000 || exit 1"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 60s
     
     security_opt:
       - no-new-privileges:true
     
-    expose:
-      - "9000"
-    
     volumes:
       - erpnext_sites:/home/frappe/frappe-bench/sites:ro
       - erpnext_logs:/home/frappe/frappe-bench/logs:rw
-    
-    environment:
-      # Same database and redis configuration as backend
-      DB_HOST: ${DB_HOST:-db}
-      DB_PORT: ${DB_PORT:-3306}
-      REDIS_CACHE: "redis-cache:6379"
-      REDIS_QUEUE: "redis-queue:6379"
-      FRAPPE_SITE_NAME_HEADER: ${SITE_NAME}
     
     # WebSocket specific startup command
     command: ["node", "/home/frappe/frappe-bench/apps/frappe/socketio.js"]
     
     depends_on:
       db:
-        condition: service_healthy
-      redis-cache:
         condition: service_healthy
     
     logging:
@@ -263,7 +245,74 @@ services:
         max-size: "${LOG_MAX_SIZE:-10m}"
         max-file: "${LOG_MAX_FILES:-5}"
         labels: "service=erpnext-websocket"
-  
+  queue-long:
+    image: frappe/erpnext:v${ERPNEXT_VERSION:-15.83.0}
+    container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_queue_long
+    
+    restart: unless-stopped
+    
+    networks:
+      - frappe_network
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '${QUEUE_CPU_LIMIT:-1.0}'
+          memory: ${QUEUE_MEMORY_LIMIT:-1G}
+    
+    volumes:
+      - erpnext_sites:/home/frappe/frappe-bench/sites:rw
+      - erpnext_logs:/home/frappe/frappe-bench/logs:rw
+    
+    environment:
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-3306}
+      REDIS_CACHE: "redis-cache:6379"
+      REDIS_QUEUE: "redis-queue:6379"
+      FRAPPE_SITE_NAME_HEADER: ${SITE_NAME}
+    
+    command: ["bench", "worker", "--queue", "long,default,short"]
+    
+    depends_on:
+      db:
+        condition: service_healthy
+      redis-queue:
+        condition: service_healthy
+
+  queue-short:
+    image: frappe/erpnext:v${ERPNEXT_VERSION:-15.83.0}
+    container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_queue_short
+    
+    restart: unless-stopped
+    
+    networks:
+      - frappe_network
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '${QUEUE_CPU_LIMIT:-0.5}'
+          memory: ${QUEUE_MEMORY_LIMIT:-512M}
+    
+    volumes:
+      - erpnext_sites:/home/frappe/frappe-bench/sites:rw
+      - erpnext_logs:/home/frappe/frappe-bench/logs:rw
+    
+    environment:
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-3306}
+      REDIS_CACHE: "redis-cache:6379"
+      REDIS_QUEUE: "redis-queue:6379"
+      FRAPPE_SITE_NAME_HEADER: ${SITE_NAME}
+    
+    command: ["bench", "worker", "--queue", "short,default"]
+    
+    depends_on:
+      db:
+        condition: service_healthy
+      redis-queue:
+        condition: service_healthy
+
   # =================================================================
   # MariaDB Database Server
   # =================================================================
@@ -280,7 +329,7 @@ services:
     
     # Run database in backend network only (no external access)
     networks:
-      - erpnext_backend
+      - frappe_network
     
     # Database needs significant resources for good performance
     deploy:
@@ -290,12 +339,12 @@ services:
           memory: ${DB_MEMORY_LIMIT:-4G}
         reservations:
           cpus: '${DB_CPU_RESERVE:-0.5}'
-          memory: ${DB_MEMORY_RESERVE:-1G}
+          memory: ${DB_MEMORY_RESERVE:-0.5G}
     
     # Critical health check for database availability
     # ERPNext cannot function without database connection
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--password=${DB_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -358,7 +407,7 @@ services:
     
     # Redis runs as non-root user in Alpine image
     networks:
-      - erpnext_backend
+      - frappe_network
     
     deploy:
       resources:
@@ -414,16 +463,13 @@ services:
     restart: unless-stopped
     
     networks:
-      - erpnext_backend
+      - frappe_network
     
     deploy:
       resources:
         limits:
           cpus: '${REDIS_CPU_LIMIT:-0.5}'
           memory: ${REDIS_QUEUE_MEMORY_LIMIT:-512M}
-        reservations:
-          cpus: '0.1'
-          memory: 64M
     
     healthcheck:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
@@ -464,6 +510,8 @@ services:
   # =================================================================
   # Handles initial setup, site creation, and configuration management
   # Runs once during deployment or when configuration changes are needed
+
+
   configurator:
     image: frappe/erpnext:v${ERPNEXT_VERSION:-15.83.0}
     container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_configurator
@@ -471,19 +519,14 @@ services:
     # Run only when explicitly needed (not automatically restarted)
     restart: "no"
     
-    user: "${DOCKER_USER_ID:-1000}:${DOCKER_GROUP_ID:-1000}"
-    
     networks:
-      - erpnext_backend
+      - frappe_network
     
     deploy:
       resources:
         limits:
           cpus: '1.0'
           memory: 1G
-        reservations:
-          cpus: '0.25'
-          memory: 256M
     
     security_opt:
       - no-new-privileges:true
@@ -496,45 +539,43 @@ services:
       DB_HOST: ${DB_HOST:-db}
       DB_PORT: ${DB_PORT:-3306}
       DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SITE_NAME: ${SITE_NAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       REDIS_CACHE: "redis-cache:6379"
       REDIS_QUEUE: "redis-queue:6379"
       FRAPPE_SITE_NAME_HEADER: ${SITE_NAME}
-    
+
     # Site configuration and setup commands
     # This runs the initial ERPNext installation
     entrypoint: ["bash", "-c"]
+
     command:
       - |
-        # Wait for database to be ready
-        echo "Waiting for database to be ready..."
-        until mysqladmin ping -h $$DB_HOST -P $$DB_PORT -u root -p$$DB_ROOT_PASSWORD --silent; do
-          echo "Database not ready, waiting..."
-          sleep 5
-        done
+        echo "Waiting for services..."
+        wait-for-it -t 120 db:3306
+        wait-for-it -t 120 redis-cache:6379
+        wait-for-it -t 120 redis-queue:6379
         
-        # Wait for Redis services
-        echo "Waiting for Redis services..."
-        until redis-cli -h redis-cache ping; do sleep 2; done
-        until redis-cli -h redis-queue ping; do sleep 2; done
+        echo "Setting configuration..."
+        bench set-config -g db_host "${DB_HOST}"
+        bench set-config -g db_port "${DB_PORT}"
+        bench set-config -g redis_cache "redis://${REDIS_CACHE}"
+        bench set-config -g redis_queue "redis://${REDIS_QUEUE}"
+        bench set-config -g redis_socketio "redis://${REDIS_CACHE}"
         
-        # Configure Frappe framework
-        echo "Configuring Frappe framework..."
-        bench set-config -g db_host $$DB_HOST
-        bench set-config -g db_port $$DB_PORT
-        bench set-config -g redis_cache "redis://redis-cache:6379"
-        bench set-config -g redis_queue "redis://redis-queue:6379"
-        bench set-config -g redis_socketio "redis://redis-cache:6379"
-        
-        # Create site if it doesn't exist
+        echo "Configuration set. Creating site..."
         if [ ! -f "sites/${SITE_NAME}/site_config.json" ]; then
           echo "Creating new site: ${SITE_NAME}"
           bench new-site ${SITE_NAME} \
             --mariadb-user-host-login-scope='%' \
             --admin-password="${ADMIN_PASSWORD}" \
             --db-root-username=root \
-            --db-root-password="$$DB_ROOT_PASSWORD" \
+            --db-root-password="${DB_ROOT_PASSWORD}" \
             --install-app erpnext \
             --set-default
         else
@@ -542,7 +583,7 @@ services:
         fi
         
         echo "Configuration completed successfully"
-    
+
     depends_on:
       db:
         condition: service_healthy
@@ -558,35 +599,52 @@ services:
         max-file: "${LOG_MAX_FILES:-5}"
         labels: "service=erpnext-configurator"
 
-# =================================================================
-# DOCKER NETWORKS
-# =================================================================
-# Network isolation for security and performance
-# Frontend network: Communication between services and reverse proxy
-# Backend network: Internal service communication (database, cache)
+  scheduler:
+      image: frappe/erpnext:v${ERPNEXT_VERSION:-15.83.0}
+      container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_scheduler
+
+      restart: unless-stopped
+      security_opt:
+        - no-new-privileges:true
+
+      networks:
+        - frappe_network
+      deploy:
+        resources:
+          limits:
+            cpus: '${SCHEDULER_CPU_LIMIT:-0.5}'
+            memory: ${SCHEDULER_MEMORY_LIMIT:-512M}
+      
+      volumes:
+        - erpnext_sites:/home/frappe/frappe-bench/sites:rw
+        - erpnext_logs:/home/frappe/frappe-bench/logs:rw
+
+      environment:
+        DB_HOST: ${DB_HOST:-db}
+        DB_PORT: ${DB_PORT:-3306}
+        REDIS_CACHE: "redis-cache:6379"
+        REDIS_QUEUE: "redis-queue:6379"
+        FRAPPE_SITE_NAME_HEADER: ${SITE_NAME}
+      
+      command: ["bench", "schedule"]
+      
+      depends_on:
+        db:
+          condition: service_healthy
+        redis-queue:
+          condition: service_healthy
+      
+      logging:
+        driver: "json-file"
+        options:
+          max-size: "${LOG_MAX_SIZE:-10m}"
+          max-file: "${LOG_MAX_FILES:-5}"
+          labels: "service=erpnext-scheduler"
+
 networks:
-  # Frontend network for reverse proxy integration
-  # This network connects to your host-level Nginx
-  erpnext_frontend:
-    name: ${COMPOSE_PROJECT_NAME:-erpnext}_frontend
-    driver: bridge
-    ipam:
-      config:
-        - subnet: ${FRONTEND_SUBNET:-172.20.0.0/24}
-    driver_opts:
-      com.docker.network.bridge.name: br-erpnext-front
-  
-  # Backend network for internal services
-  # Isolated from external access for security
-  erpnext_backend:
+  frappe_network:
     name: ${COMPOSE_PROJECT_NAME:-erpnext}_backend
     driver: bridge
-    internal: true  # No external internet access
-    ipam:
-      config:
-        - subnet: ${BACKEND_SUBNET:-172.21.0.0/24}
-    driver_opts:
-      com.docker.network.bridge.name: br-erpnext-back
 
 # =================================================================
 # PERSISTENT VOLUMES
