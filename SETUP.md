@@ -155,7 +155,74 @@ server {
 }
 ```
 
-## 🚨 Important Security Notes
+## � Email Configuration (SMTP)
+
+ERPNext requires email configuration for notifications, password resets, sending invoices, and other features.
+
+### Option 1: Configure via ERPNext Web Interface (Recommended)
+
+1. Log in to ERPNext as Administrator
+2. Go to **Setup > Email > Email Account**
+3. Click **New** to create a new email account
+4. Configure the following:
+   - **Email Address**: your-email@example.com
+   - **Email Account Name**: Notifications (or any name)
+   - **SMTP Server**: smtp.example.com
+   - **SMTP Port**: 587 (for TLS) or 465 (for SSL)
+   - **Use TLS**: ✓ (checked for port 587)
+   - **Use SSL**: ✓ (checked for port 465)
+   - **Password**: Your SMTP password
+5. Enable **Default Outgoing** to use this for all outgoing emails
+6. Click **Save**
+
+### Option 2: Configure via bench command
+
+After the site is created, you can configure email via the command line:
+
+```bash
+# Enter the backend container
+docker compose exec backend bash
+
+# Set up email account
+bench --site ${SITE_NAME} set-config mail_server "smtp.example.com"
+bench --site ${SITE_NAME} set-config mail_port 587
+bench --site ${SITE_NAME} set-config use_tls 1
+bench --site ${SITE_NAME} set-config mail_login "your-email@example.com"
+bench --site ${SITE_NAME} set-config mail_password "your_smtp_password"
+bench --site ${SITE_NAME} set-config auto_email_id "noreply@your-domain.com"
+```
+
+### Common SMTP Settings
+
+| Provider | SMTP Server | Port | Encryption | Notes |
+|----------|-------------|------|------------|-------|
+| **Gmail** | smtp.gmail.com | 587 | TLS | Requires App Password |
+| **Google Workspace** | smtp.gmail.com | 587 | TLS | Requires App Password |
+| **Office 365** | smtp.office365.com | 587 | TLS | May need App Password with MFA |
+| **Outlook.com** | smtp-mail.outlook.com | 587 | TLS | Standard login |
+| **Amazon SES** | email-smtp.{region}.amazonaws.com | 587 | TLS | IAM credentials |
+| **Mailgun** | smtp.mailgun.org | 587 | TLS | Domain credentials |
+| **SendGrid** | smtp.sendgrid.net | 587 | TLS | API key as password |
+| **Zoho Mail** | smtp.zoho.com | 587 | TLS | Standard login |
+
+### Gmail / Google Workspace Setup
+
+1. Enable 2-Factor Authentication on your Google account
+2. Go to **Google Account > Security > App Passwords**
+3. Generate a new App Password for "Mail"
+4. Use this App Password (not your regular password) as `SMTP_PASSWORD`
+
+### Testing Email Configuration
+
+```bash
+# Test email sending from within the container
+docker compose exec backend bench --site ${SITE_NAME} sendmail your-test-email@example.com
+
+# Check email queue
+docker compose exec backend bench --site ${SITE_NAME} show-pending-emails
+```
+
+## �🚨 Important Security Notes
 
 1. **Change all default passwords** in the .env file
 2. **Use strong passwords** (minimum 16 characters)
