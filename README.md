@@ -1,120 +1,99 @@
 # ERPNext Docker Production Deployment
 
-This repository contains the production-ready Docker Compose configuration for deploying ERPNext using the official [Frappe Docker](https://github.com/frappe/frappe_docker) guidelines.
+Production-ready Docker Compose configuration for ERPNext v16, based on the official [Frappe Docker](https://github.com/frappe/frappe_docker) repository.
 
 ## 🎯 Project Overview
 
-This project provides a secure, scalable, and maintainable Docker-based deployment configuration for ERPNext in production environments. It follows Docker Compose best practices and integrates seamlessly with existing reverse proxy infrastructure.
+This project provides a secure, scalable, and maintainable Docker-based deployment for ERPNext v16 in production environments. It follows Docker Compose best practices and integrates seamlessly with existing Nginx reverse proxy infrastructure on Debian 12.
 
 ## 📋 Prerequisites
 
 ### System Requirements
 - **Operating System**: Debian 12 (or compatible Linux distribution)
-- **Docker**: Latest stable version (24.0+)
-- **Docker Compose**: v2.x (latest recommended)
+- **Docker**: v24.0+ with Compose v2
 - **RAM**: Minimum 4GB, recommended 8GB+
 - **Storage**: Minimum 20GB free space
-- **Network**: HTTPS reverse proxy (Nginx) running on host
+- **Network**: Nginx reverse proxy on host for SSL termination
 
-### Infrastructure Requirements
-- Nginx reverse proxy configured at host level for SSL termination
-- Domain name with proper DNS configuration
-- SSL certificate (Let's Encrypt recommended)
-- Firewall configured to allow only necessary ports
-
-## 🏗️ Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Host Nginx    │────│  Docker Network │────│   ERPNext App   │
-│  (SSL/Reverse   │    │                 │    │   Container     │
-│     Proxy)      │    │                 │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │
-                       ┌─────────────────┐
-                       │   MariaDB/      │
-                       │   PostgreSQL    │
-                       │   Container     │
-                       └─────────────────┘
+### Quick Check
+```bash
+docker --version      # Should be 24.0+
+docker compose version  # Should be v2.x
 ```
 
 ## 🚀 Quick Start
 
-### 1. Setup and Deployment
+### 1. Configure Environment
 ```bash
-# For local development/testing
-git clone <repository-url>
-cd erpnext-docker
-
-# Copy example environment file
+# Copy environment template
 cp .env.example .env
 
-# Edit environment variables
+# Edit with your values (REQUIRED: SITE_NAME, ADMIN_PASSWORD, DB_ROOT_PASSWORD)
 nano .env
 ```
 
-**📦 For Production Deployment**: See **[DEPLOYMENT.md](DEPLOYMENT.md)** for complete instructions on transferring files from your local Ubuntu 24.10 machine to your Debian 12 production server via SSH.
-
-### 2. Configure Environment Variables
-Edit the `.env` file with your specific values:
+### 2. Create Data Directories
 ```bash
-# Database Configuration
-DB_ROOT_PASSWORD=your_secure_root_password
-DB_PASSWORD=your_secure_db_password
-DB_NAME=erpnext_db
-DB_USER=erpnext_user
-
-# ERPNext Configuration
-SITE_NAME=your-domain.com
-ADMIN_PASSWORD=your_admin_password
-
-# Security
-SECRET_KEY=your_long_random_secret_key
+mkdir -p data/{sites,logs,db,redis_queue}
+sudo chown -R 1000:1000 data/
 ```
 
 ### 3. Deploy
 ```bash
-# Create Docker network (if not exists)
-docker network create erpnext-network
-
-# Start services
+# Pull images and start
+docker compose pull
 docker compose up -d
+
+# Monitor site creation (wait for completion)
+docker compose logs -f create-site
 
 # Check status
 docker compose ps
 ```
 
-### 4. Initial Setup
-```bash
-# Create your first site
-docker compose exec erpnext bench new-site your-domain.com \
-  --admin-password your_admin_password \
-  --db-root-password your_db_root_password
+### 4. Access ERPNext
+- **URL**: http://localhost:8080
+- **Username**: Administrator
+- **Password**: (your ADMIN_PASSWORD from .env)
 
-# Install ERPNext app
-docker compose exec erpnext bench --site your-domain.com install-app erpnext
+📦 **For detailed setup**: See **[SETUP.md](SETUP.md)**  
+🚀 **For server deployment**: See **[DEPLOYMENT.md](DEPLOYMENT.md)**  
+⬆️ **Upgrading from v15**: See **[UPGRADE.md](UPGRADE.md)**
+
+## 🏗️ Architecture
+
+```
+┌─────────────────┐         ┌─────────────────────────────────────────┐
+│   Host Nginx    │─────────│           Docker Network                │
+│  (SSL + Proxy)  │  :8080  │  ┌─────────┐  ┌─────────┐  ┌─────────┐  │
+└─────────────────┘         │  │Frontend │──│ Backend │──│Websocket│  │
+                            │  │ (Nginx) │  │(Gunicorn)│ │(Node.js)│  │
+                            │  └─────────┘  └────┬────┘  └─────────┘  │
+                            │                    │                     │
+                            │  ┌─────────┐  ┌────┴────┐  ┌─────────┐  │
+                            │  │ MariaDB │  │  Redis  │  │Scheduler│  │
+                            │  │  10.6   │  │  Cache  │  │& Workers│  │
+                            │  └─────────┘  └─────────┘  └─────────┘  │
+                            └─────────────────────────────────────────┘
 ```
 
 ## 📁 Project Structure
 
 ```
 erpnext-docker/
-├── docker-compose.yml          # Main Docker Compose configuration
-├── docker-compose.override.yml # Local development overrides (optional)
-├── .env.example               # Environment variables template
-├── .env                      # Environment variables (git-ignored)
-├── nginx/                    # Nginx configuration for container
-│   ├── nginx.conf           # Main Nginx config
-│   └── sites-available/     # Site-specific configurations
-├── backups/                 # Backup storage directory
-├── logs/                   # Application logs
+├── docker-compose.yml      # Main Docker Compose configuration (v16)
+├── .env.example            # Environment variables template
+├── .env                    # Your configuration (git-ignored)
 ├── data/                   # Persistent data volumes
-│   ├── sites/              # ERPNext sites data
-│   └── db/                 # Database data
-└── docs/                   # Additional documentation
-    ├── deployment.md       # Detailed deployment guide
-    ├── maintenance.md      # Maintenance procedures
-    └── troubleshooting.md  # Common issues and solutions
+│   ├── sites/              # ERPNext sites and uploads
+│   ├── logs/               # Application logs
+│   ├── db/                 # MariaDB data
+│   └── redis_queue/        # Redis queue persistence
+├── SETUP.md                # Quick setup guide
+├── DEPLOYMENT.md           # Server deployment guide
+├── UPGRADE.md              # v15 to v16 upgrade guide
+├── SECURITY.md             # Security configuration
+└── README.md               # This file
 ```
 
 ## 🔒 Security Best Practices
@@ -156,21 +135,21 @@ All configuration is managed through environment variables defined in `.env`:
 ### Docker Compose Services
 
 #### ERPNext Application
-- **Image**: `frappe/erpnext:latest`
-- **Purpose**: Main application server
-- **Volumes**: Site data, logs, backups
-- **Security**: Non-root user, resource limits
+- **Image**: `frappe/erpnext:v16.0.1`
+- **Purpose**: Main application server (backend, frontend, workers)
+- **Volumes**: Site data, logs
+- **Security**: Non-root user, resource limits, no-new-privileges
 
 #### Database (MariaDB)
-- **Image**: `mariadb:10.8`
-- **Purpose**: Database server
+- **Image**: `mariadb:10.6`
+- **Purpose**: Database server (officially recommended by Frappe)
 - **Volumes**: Persistent database storage
-- **Security**: Custom user, encrypted storage
+- **Security**: Custom user, health checks, connection limits
 
-#### Redis Cache
-- **Image**: `redis:alpine`
-- **Purpose**: Caching and session storage
-- **Security**: No external exposure, memory limits
+#### Redis Cache & Queue
+- **Image**: `redis:7-alpine`
+- **Purpose**: Caching, session storage, and background job queue
+- **Security**: No external exposure, memory limits, persistence for queue
 
 ## 🔄 Maintenance
 
@@ -248,6 +227,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Last Updated**: October 2025  
+**Version**: ERPNext v16.0.1 (Frappe Framework v16)  
+**Last Updated**: January 2026  
 **Maintainer**: Your Organization  
 **Support**: Create an issue in this repository for support
