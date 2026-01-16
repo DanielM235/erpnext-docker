@@ -222,8 +222,9 @@ services:
         condition: on-failure
     
     # Health check to monitor application status
+    # Uses the site name from SITE_NAME environment variable in the Host header
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8000/api/method/frappe.ping || exit 1"]
+      test: ["CMD-SHELL", "curl -sf -H 'Host: ${SITE_NAME:-frontend}' http://localhost:8000/api/method/frappe.ping || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -267,8 +268,9 @@ services:
         condition: on-failure
     
     # Health check for nginx web server
+    # Uses the site name from SITE_NAME environment variable in the Host header
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8080 || exit 1"]
+      test: ["CMD-SHELL", "curl -sf -H 'Host: ${SITE_NAME:-frontend}' http://localhost:8080 || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
