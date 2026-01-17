@@ -1,0 +1,1193 @@
+{
+  "name": "Plano de Contas Pessoal - Brasil",
+  "country_code": "br",
+  "tree": true,
+  "accounts": [
+    {
+      "account_name": "Ativos",
+      "account_number": "1000",
+      "is_group": 1,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Ativo Circulante",
+      "parent_account": "Ativos",
+      "account_number": "1100",
+      "is_group": 1,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Caixa e Equivalentes",
+      "parent_account": "Ativo Circulante",
+      "account_number": "1110",
+      "is_group": 1,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Caixa",
+      "parent_account": "Caixa e Equivalentes",
+      "account_number": "1111",
+      "account_type": "Cash",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Banco - Conta Corrente",
+      "parent_account": "Caixa e Equivalentes",
+      "account_number": "1112",
+      "account_type": "Bank",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Banco - Conta Poupança",
+      "parent_account": "Caixa e Equivalentes",
+      "account_number": "1113",
+      "account_type": "Bank",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Banco - Conta Investimentos",
+      "parent_account": "Caixa e Equivalentes",
+      "account_number": "1114",
+      "account_type": "Bank",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Carteira Digital",
+      "parent_account": "Caixa e Equivalentes",
+      "account_number": "1115",
+      "account_type": "Bank",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Investimentos Curto Prazo",
+      "parent_account": "Ativo Circulante",
+      "account_number": "1120",
+      "is_group": 1,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Tesouro Direto",
+      "parent_account": "Investimentos Curto Prazo",
+      "account_number": "1121",
+      "account_type": "Current Asset",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "CDB",
+      "parent_account": "Investimentos Curto Prazo",
+      "account_number": "1122",
+      "account_type": "Current Asset",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "LCI/LCA",
+      "parent_account": "Investimentos Curto Prazo",
+      "account_number": "1123",
+      "account_type": "Current Asset",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Fundos de Investimento",
+      "parent_account": "Investimentos Curto Prazo",
+      "account_number": "1124",
+      "account_type": "Current Asset",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Contas a Receber",
+      "parent_account": "Ativo Circulante",
+      "account_number": "1130",
+      "is_group": 1,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Empréstimos Concedidos",
+      "parent_account": "Contas a Receber",
+      "account_number": "1131",
+      "account_type": "Receivable",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Valores a Receber",
+      "parent_account": "Contas a Receber",
+      "account_number": "1132",
+      "account_type": "Receivable",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Adiantamentos",
+      "parent_account": "Contas a Receber",
+      "account_number": "1133",
+      "account_type": "Receivable",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Outros Ativos Circulantes",
+      "parent_account": "Ativo Circulante",
+      "account_number": "1190",
+      "is_group": 1,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Estoque de Bens",
+      "parent_account": "Outros Ativos Circulantes",
+      "account_number": "1191",
+      "account_type": "Stock",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Despesas Pagas Antecipadamente",
+      "parent_account": "Outros Ativos Circulantes",
+      "account_number": "1192",
+      "account_type": "Current Asset",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Ativo Não Circulante",
+      "parent_account": "Ativos",
+      "account_number": "1200",
+      "is_group": 1,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Investimentos Longo Prazo",
+      "parent_account": "Ativo Não Circulante",
+      "account_number": "1210",
+      "is_group": 1,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Ações",
+      "parent_account": "Investimentos Longo Prazo",
+      "account_number": "1211",
+      "account_type": "Fixed Asset",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Fundos Imobiliários",
+      "parent_account": "Investimentos Longo Prazo",
+      "account_number": "1212",
+      "account_type": "Fixed Asset",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Criptomoedas",
+      "parent_account": "Investimentos Longo Prazo",
+      "account_number": "1213",
+      "account_type": "Fixed Asset",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Previdência Privada",
+      "parent_account": "Investimentos Longo Prazo",
+      "account_number": "1214",
+      "account_type": "Fixed Asset",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Imobilizado",
+      "parent_account": "Ativo Não Circulante",
+      "account_number": "1220",
+      "is_group": 1,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Imóveis",
+      "parent_account": "Imobilizado",
+      "account_number": "1221",
+      "account_type": "Fixed Asset",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Veículos",
+      "parent_account": "Imobilizado",
+      "account_number": "1222",
+      "account_type": "Fixed Asset",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Móveis e Utensílios",
+      "parent_account": "Imobilizado",
+      "account_number": "1223",
+      "account_type": "Fixed Asset",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Equipamentos Eletrônicos",
+      "parent_account": "Imobilizado",
+      "account_number": "1224",
+      "account_type": "Fixed Asset",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "(-) Depreciação Acumulada",
+      "parent_account": "Imobilizado",
+      "account_number": "1229",
+      "account_type": "Accumulated Depreciation",
+      "is_group": 0,
+      "root_type": "Asset"
+    },
+    {
+      "account_name": "Passivos",
+      "account_number": "2000",
+      "is_group": 1,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "Passivo Circulante",
+      "parent_account": "Passivos",
+      "account_number": "2100",
+      "is_group": 1,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "Contas a Pagar",
+      "parent_account": "Passivo Circulante",
+      "account_number": "2110",
+      "is_group": 1,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "Fornecedores",
+      "parent_account": "Contas a Pagar",
+      "account_number": "2111",
+      "account_type": "Payable",
+      "is_group": 0,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "Contas Domésticas",
+      "parent_account": "Contas a Pagar",
+      "account_number": "2112",
+      "account_type": "Payable",
+      "is_group": 0,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "Cartões de Crédito",
+      "parent_account": "Contas a Pagar",
+      "account_number": "2113",
+      "account_type": "Payable",
+      "is_group": 0,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "Financiamentos Curto Prazo",
+      "parent_account": "Passivo Circulante",
+      "account_number": "2120",
+      "is_group": 1,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "Empréstimos Bancários",
+      "parent_account": "Financiamentos Curto Prazo",
+      "account_number": "2121",
+      "account_type": "Current Liability",
+      "is_group": 0,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "Cheque Especial",
+      "parent_account": "Financiamentos Curto Prazo",
+      "account_number": "2122",
+      "account_type": "Current Liability",
+      "is_group": 0,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "Obrigações Tributárias",
+      "parent_account": "Passivo Circulante",
+      "account_number": "2130",
+      "is_group": 1,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "IRPF a Pagar",
+      "parent_account": "Obrigações Tributárias",
+      "account_number": "2131",
+      "account_type": "Tax",
+      "is_group": 0,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "INSS a Pagar",
+      "parent_account": "Obrigações Tributárias",
+      "account_number": "2132",
+      "account_type": "Tax",
+      "is_group": 0,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "IPTU a Pagar",
+      "parent_account": "Obrigações Tributárias",
+      "account_number": "2133",
+      "account_type": "Tax",
+      "is_group": 0,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "IPVA a Pagar",
+      "parent_account": "Obrigações Tributárias",
+      "account_number": "2134",
+      "account_type": "Tax",
+      "is_group": 0,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "Passivo Não Circulante",
+      "parent_account": "Passivos",
+      "account_number": "2200",
+      "is_group": 1,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "Financiamentos Longo Prazo",
+      "parent_account": "Passivo Não Circulante",
+      "account_number": "2210",
+      "is_group": 1,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "Financiamento Imobiliário",
+      "parent_account": "Financiamentos Longo Prazo",
+      "account_number": "2211",
+      "account_type": "Current Liability",
+      "is_group": 0,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "Financiamento de Veículos",
+      "parent_account": "Financiamentos Longo Prazo",
+      "account_number": "2212",
+      "account_type": "Current Liability",
+      "is_group": 0,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "Consórcio",
+      "parent_account": "Financiamentos Longo Prazo",
+      "account_number": "2213",
+      "account_type": "Current Liability",
+      "is_group": 0,
+      "root_type": "Liability"
+    },
+    {
+      "account_name": "Patrimônio Líquido",
+      "account_number": "3000",
+      "is_group": 1,
+      "root_type": "Equity"
+    },
+    {
+      "account_name": "Capital Próprio",
+      "parent_account": "Patrimônio Líquido",
+      "account_number": "3100",
+      "account_type": "Equity",
+      "is_group": 0,
+      "root_type": "Equity"
+    },
+    {
+      "account_name": "Lucros Acumulados",
+      "parent_account": "Patrimônio Líquido",
+      "account_number": "3200",
+      "account_type": "Equity",
+      "is_group": 0,
+      "root_type": "Equity"
+    },
+    {
+      "account_name": "Resultado do Exercício",
+      "parent_account": "Patrimônio Líquido",
+      "account_number": "3300",
+      "account_type": "Equity",
+      "is_group": 0,
+      "root_type": "Equity"
+    },
+    {
+      "account_name": "Receitas",
+      "account_number": "4000",
+      "is_group": 1,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Receitas do Trabalho",
+      "parent_account": "Receitas",
+      "account_number": "4100",
+      "is_group": 1,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Salário",
+      "parent_account": "Receitas do Trabalho",
+      "account_number": "4110",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Horas Extras",
+      "parent_account": "Receitas do Trabalho",
+      "account_number": "4111",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Comissões",
+      "parent_account": "Receitas do Trabalho",
+      "account_number": "4112",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Bônus",
+      "parent_account": "Receitas do Trabalho",
+      "account_number": "4113",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "13º Salário",
+      "parent_account": "Receitas do Trabalho",
+      "account_number": "4114",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "PLR - Participação nos Lucros",
+      "parent_account": "Receitas do Trabalho",
+      "account_number": "4115",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Férias",
+      "parent_account": "Receitas do Trabalho",
+      "account_number": "4116",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Vale Alimentação",
+      "parent_account": "Receitas do Trabalho",
+      "account_number": "4117",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Vale Refeição",
+      "parent_account": "Receitas do Trabalho",
+      "account_number": "4118",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Vale Transporte",
+      "parent_account": "Receitas do Trabalho",
+      "account_number": "4119",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Receitas de Negócio Próprio",
+      "parent_account": "Receitas",
+      "account_number": "4200",
+      "is_group": 1,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Prestação de Serviços",
+      "parent_account": "Receitas de Negócio Próprio",
+      "account_number": "4210",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Venda de Produtos",
+      "parent_account": "Receitas de Negócio Próprio",
+      "account_number": "4220",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Receitas de Investimentos",
+      "parent_account": "Receitas",
+      "account_number": "4300",
+      "is_group": 1,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Dividendos",
+      "parent_account": "Receitas de Investimentos",
+      "account_number": "4310",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Juros sobre Capital Próprio",
+      "parent_account": "Receitas de Investimentos",
+      "account_number": "4311",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Rendimentos de Renda Fixa",
+      "parent_account": "Receitas de Investimentos",
+      "account_number": "4320",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Ganhos com Ações",
+      "parent_account": "Receitas de Investimentos",
+      "account_number": "4330",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Rendimentos de Fundos Imobiliários",
+      "parent_account": "Receitas de Investimentos",
+      "account_number": "4340",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Ganhos com Criptomoedas",
+      "parent_account": "Receitas de Investimentos",
+      "account_number": "4350",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Receitas de Aluguéis",
+      "parent_account": "Receitas",
+      "account_number": "4400",
+      "is_group": 1,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Aluguel de Imóvel",
+      "parent_account": "Receitas de Aluguéis",
+      "account_number": "4410",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Aluguel de Veículo",
+      "parent_account": "Receitas de Aluguéis",
+      "account_number": "4420",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Outras Receitas",
+      "parent_account": "Receitas",
+      "account_number": "4900",
+      "is_group": 1,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Pensão Alimentícia Recebida",
+      "parent_account": "Outras Receitas",
+      "account_number": "4910",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Doações Recebidas",
+      "parent_account": "Outras Receitas",
+      "account_number": "4920",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Reembolsos",
+      "parent_account": "Outras Receitas",
+      "account_number": "4930",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Prêmios e Sorteios",
+      "parent_account": "Outras Receitas",
+      "account_number": "4940",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Receitas Eventuais",
+      "parent_account": "Outras Receitas",
+      "account_number": "4990",
+      "account_type": "Income Account",
+      "is_group": 0,
+      "root_type": "Income"
+    },
+    {
+      "account_name": "Despesas",
+      "account_number": "5000",
+      "is_group": 1,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Despesas com Moradia",
+      "parent_account": "Despesas",
+      "account_number": "5100",
+      "is_group": 1,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Aluguel",
+      "parent_account": "Despesas com Moradia",
+      "account_number": "5110",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Condomínio",
+      "parent_account": "Despesas com Moradia",
+      "account_number": "5120",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "IPTU",
+      "parent_account": "Despesas com Moradia",
+      "account_number": "5130",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Energia Elétrica",
+      "parent_account": "Despesas com Moradia",
+      "account_number": "5140",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Água",
+      "parent_account": "Despesas com Moradia",
+      "account_number": "5150",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Gás",
+      "parent_account": "Despesas com Moradia",
+      "account_number": "5160",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Internet",
+      "parent_account": "Despesas com Moradia",
+      "account_number": "5170",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "TV por Assinatura",
+      "parent_account": "Despesas com Moradia",
+      "account_number": "5180",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Telefone Fixo",
+      "parent_account": "Despesas com Moradia",
+      "account_number": "5190",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Despesas com Alimentação",
+      "parent_account": "Despesas",
+      "account_number": "5200",
+      "is_group": 1,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Supermercado",
+      "parent_account": "Despesas com Alimentação",
+      "account_number": "5210",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Restaurantes",
+      "parent_account": "Despesas com Alimentação",
+      "account_number": "5220",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Lanches e Cafés",
+      "parent_account": "Despesas com Alimentação",
+      "account_number": "5230",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Delivery",
+      "parent_account": "Despesas com Alimentação",
+      "account_number": "5240",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Despesas com Transporte",
+      "parent_account": "Despesas",
+      "account_number": "5300",
+      "is_group": 1,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Combustível",
+      "parent_account": "Despesas com Transporte",
+      "account_number": "5310",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Estacionamento",
+      "parent_account": "Despesas com Transporte",
+      "account_number": "5320",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Pedágio",
+      "parent_account": "Despesas com Transporte",
+      "account_number": "5330",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Transporte Público",
+      "parent_account": "Despesas com Transporte",
+      "account_number": "5340",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Táxi e Aplicativos",
+      "parent_account": "Despesas com Transporte",
+      "account_number": "5350",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Manutenção de Veículo",
+      "parent_account": "Despesas com Transporte",
+      "account_number": "5360",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "IPVA",
+      "parent_account": "Despesas com Transporte",
+      "account_number": "5370",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Seguro de Veículo",
+      "parent_account": "Despesas com Transporte",
+      "account_number": "5380",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Licenciamento",
+      "parent_account": "Despesas com Transporte",
+      "account_number": "5390",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Despesas com Saúde",
+      "parent_account": "Despesas",
+      "account_number": "5400",
+      "is_group": 1,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Plano de Saúde",
+      "parent_account": "Despesas com Saúde",
+      "account_number": "5410",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Consultas Médicas",
+      "parent_account": "Despesas com Saúde",
+      "account_number": "5420",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Exames",
+      "parent_account": "Despesas com Saúde",
+      "account_number": "5430",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Medicamentos",
+      "parent_account": "Despesas com Saúde",
+      "account_number": "5440",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Odontologia",
+      "parent_account": "Despesas com Saúde",
+      "account_number": "5450",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Terapias",
+      "parent_account": "Despesas com Saúde",
+      "account_number": "5460",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Despesas com Educação",
+      "parent_account": "Despesas",
+      "account_number": "5500",
+      "is_group": 1,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Mensalidade Escolar",
+      "parent_account": "Despesas com Educação",
+      "account_number": "5510",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Mensalidade Universitária",
+      "parent_account": "Despesas com Educação",
+      "account_number": "5520",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Cursos e Capacitação",
+      "parent_account": "Despesas com Educação",
+      "account_number": "5530",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Material Escolar",
+      "parent_account": "Despesas com Educação",
+      "account_number": "5540",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Livros",
+      "parent_account": "Despesas com Educação",
+      "account_number": "5550",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Despesas Pessoais",
+      "parent_account": "Despesas",
+      "account_number": "5600",
+      "is_group": 1,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Vestuário",
+      "parent_account": "Despesas Pessoais",
+      "account_number": "5610",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Calçados",
+      "parent_account": "Despesas Pessoais",
+      "account_number": "5620",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Acessórios",
+      "parent_account": "Despesas Pessoais",
+      "account_number": "5630",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Cabeleireiro",
+      "parent_account": "Despesas Pessoais",
+      "account_number": "5640",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Cosméticos",
+      "parent_account": "Despesas Pessoais",
+      "account_number": "5650",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Academia",
+      "parent_account": "Despesas Pessoais",
+      "account_number": "5660",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Telefone Celular",
+      "parent_account": "Despesas Pessoais",
+      "account_number": "5670",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Despesas com Lazer",
+      "parent_account": "Despesas",
+      "account_number": "5700",
+      "is_group": 1,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Cinema",
+      "parent_account": "Despesas com Lazer",
+      "account_number": "5710",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Shows e Eventos",
+      "parent_account": "Despesas com Lazer",
+      "account_number": "5720",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Viagens",
+      "parent_account": "Despesas com Lazer",
+      "account_number": "5730",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Hobbies",
+      "parent_account": "Despesas com Lazer",
+      "account_number": "5740",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Streaming (Netflix, Spotify, etc)",
+      "parent_account": "Despesas com Lazer",
+      "account_number": "5750",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Despesas Financeiras",
+      "parent_account": "Despesas",
+      "account_number": "5800",
+      "is_group": 1,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Juros de Empréstimos",
+      "parent_account": "Despesas Financeiras",
+      "account_number": "5810",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Juros de Cartão de Crédito",
+      "parent_account": "Despesas Financeiras",
+      "account_number": "5820",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Juros de Cheque Especial",
+      "parent_account": "Despesas Financeiras",
+      "account_number": "5830",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Tarifas Bancárias",
+      "parent_account": "Despesas Financeiras",
+      "account_number": "5840",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "IOF",
+      "parent_account": "Despesas Financeiras",
+      "account_number": "5850",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Outras Despesas",
+      "parent_account": "Despesas",
+      "account_number": "5900",
+      "is_group": 1,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Seguros",
+      "parent_account": "Outras Despesas",
+      "account_number": "5910",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Pensão Alimentícia Paga",
+      "parent_account": "Outras Despesas",
+      "account_number": "5920",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Doações",
+      "parent_account": "Outras Despesas",
+      "account_number": "5930",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Presentes",
+      "parent_account": "Outras Despesas",
+      "account_number": "5940",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Animais de Estimação",
+      "parent_account": "Outras Despesas",
+      "account_number": "5950",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Serviços Domésticos",
+      "parent_account": "Outras Despesas",
+      "account_number": "5960",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    },
+    {
+      "account_name": "Despesas Eventuais",
+      "parent_account": "Outras Despesas",
+      "account_number": "5990",
+      "account_type": "Expense Account",
+      "is_group": 0,
+      "root_type": "Expense"
+    }
+  ]
+}

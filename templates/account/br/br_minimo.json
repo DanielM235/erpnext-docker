@@ -1,0 +1,26 @@
+{
+  "name": "Plano de Contas Mínimo - Brasil",
+  "country_code": "br",
+  "tree": {
+    "1000 - Ativos": {
+      "root_type": "Asset",
+      "is_group": 1
+    },
+    "2000 - Passivos": {
+      "root_type": "Liability",
+      "is_group": 1
+    },
+    "3000 - Patrimônio Líquido": {
+      "root_type": "Equity",
+      "is_group": 1
+    },
+    "4000 - Receitas": {
+      "root_type": "Income",
+      "is_group": 1
+    },
+    "5000 - Despesas": {
+      "root_type": "Expense",
+      "is_group": 1
+    }
+  }
+}
