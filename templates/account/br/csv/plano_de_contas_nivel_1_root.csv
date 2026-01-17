@@ -1,0 +1,6 @@
+"Nome da Conta","Company","Parent Account","Account Number","Account Type","É grupo","Root Type"
+"Ativos","DM-CASA","","1000","",1,"Asset"
+"Passivos","DM-CASA","","2000","",1,"Liability"
+"Patrimônio Líquido","DM-CASA","","3000","",1,"Equity"
+"Receitas","DM-CASA","","4000","",1,"Income"
+"Despesas","DM-CASA","","5000","",1,"Expense"

@@ -1,38 +1,36 @@
 # ERPNext Production Setup Guide
 
+> **Version**: ERPNext v16.0.1 | **Platform**: Debian 12 + Host Nginx
+
 ## 📋 Quick Setup Instructions
 
 ### 1. Initial Directory Setup
 
-**⚠️ IMPORTANT**: Before creating directories, read **[SECURITY.md](SECURITY.md)** if:
-- User ID 1000 doesn't exist on your system  
-- You need to use a different port than 8080
-- You want to understand Docker user mapping
+**⚠️ IMPORTANT**: The official ERPNext Docker images run as **UID 1000**. This is fixed and cannot be changed at runtime. Your data directories must be accessible by UID 1000.
 
-**Quick setup (if UID 1000 is available):**
+**Quick setup:**
 ```bash
-# Create directories with proper permissions
+# Create directories with proper permissions for UID 1000
 mkdir -p data/{sites,logs,db,redis_queue}
 sudo chown -R 1000:1000 data/
 chmod -R 755 data/
 ```
 
-**Custom UID setup (if UID 1000 is not available):**
+**Optional: Create a dedicated host user with UID 1000 (recommended):**
 ```bash
-# 1. Create user and get UID
-sudo useradd -m -s /bin/bash erpnext
+# Check if UID 1000 is available
+id 1000 2>/dev/null && echo "UID 1000 exists" || echo "UID 1000 is available"
+
+# If available, create dedicated user
+sudo useradd -u 1000 -m -s /bin/bash erpnext
 sudo usermod -aG docker erpnext
-USER_UID=$(id -u erpnext)
 
-# 2. Update .env with your user's UID
-cp .env.example .env
-echo "DOCKER_USER_ID=$USER_UID" >> .env
-echo "DOCKER_GROUP_ID=$USER_UID" >> .env
-
-# 3. Create directories as the correct user
+# Create directories as the erpnext user
 sudo -u erpnext mkdir -p data/{sites,logs,db,redis_queue}
-sudo -u erpnext chmod -R 755 data/
+chmod -R 755 data/
 ```
+
+> **Note**: Even if you don't create a host user with UID 1000, the containers will work correctly as long as the data directories are owned by UID 1000. See **[SECURITY.md](SECURITY.md)** for detailed security considerations.
 
 ### 2. Environment Configuration
 ```bash
@@ -46,35 +44,57 @@ nano .env
 ### 3. Required Environment Variables
 **You MUST configure these variables before starting:**
 
-- `SITE_NAME`: Your domain name (e.g., erp.company.com)
-- `ADMIN_PASSWORD`: Strong password for ERPNext admin (see [SECURITY.md](SECURITY.md) for password generation)
-- `DB_ROOT_PASSWORD`: Strong password for database root
-- `DB_PASSWORD`: Strong password for application database user
-- `FRONTEND_PORT`: Port for host nginx connection (default 8080, change if conflicts)
-- `DOCKER_USER_ID`: User ID for containers (default 1000, change if UID 1000 unavailable)
-- `DOCKER_GROUP_ID`: Group ID for containers (default 1000, change if needed)
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `SITE_NAME` | Your domain name | `erp.company.com` |
+| `ADMIN_PASSWORD` | ERPNext Administrator password | Strong password (min 8 chars) |
+| `DB_ROOT_PASSWORD` | MariaDB root password | Very strong password |
+| `FRONTEND_PORT` | Port for host nginx (default 8080) | `8080` |
+
+**Optional but recommended:**
+- `ERPNEXT_VERSION`: Specific version (default: 16.0.1)
+- `TIMEZONE`: Your timezone (default: UTC)
+- See `.env.example` for all options
 
 ### 4. Start Services
 ```bash
+# Pull latest images
+docker compose pull
+
 # Start all services
 docker compose up -d
 
-# Monitor the startup process
-docker compose logs -f configurator
+# Monitor the site creation process (wait for completion)
+docker compose logs -f create-site
 
 # Check service status
 docker compose ps
 ```
 
+**⏱️ Initial startup takes 3-5 minutes** as it:
+1. Configures common site settings
+2. Initializes the database
+3. Creates your ERPNext site
+4. Installs ERPNext apps
+
 ### 5. Verify Installation
 ```bash
-# Check if your site is accessible
+# Check all services are healthy
+docker compose ps
+
+# Verify site is accessible
 curl -I http://localhost:8080
 
-# View logs if there are issues
+# If issues, check these logs:
 docker compose logs backend
 docker compose logs frontend
+docker compose logs create-site
 ```
+
+### 6. Access ERPNext
+- **URL**: http://localhost:8080 (or your configured FRONTEND_PORT)
+- **Username**: Administrator
+- **Password**: (what you set in ADMIN_PASSWORD)
 
 ## 🔧 Host Nginx Configuration
 
@@ -135,7 +155,74 @@ server {
 }
 ```
 
-## 🚨 Important Security Notes
+## � Email Configuration (SMTP)
+
+ERPNext requires email configuration for notifications, password resets, sending invoices, and other features.
+
+### Option 1: Configure via ERPNext Web Interface (Recommended)
+
+1. Log in to ERPNext as Administrator
+2. Go to **Setup > Email > Email Account**
+3. Click **New** to create a new email account
+4. Configure the following:
+   - **Email Address**: your-email@example.com
+   - **Email Account Name**: Notifications (or any name)
+   - **SMTP Server**: smtp.example.com
+   - **SMTP Port**: 587 (for TLS) or 465 (for SSL)
+   - **Use TLS**: ✓ (checked for port 587)
+   - **Use SSL**: ✓ (checked for port 465)
+   - **Password**: Your SMTP password
+5. Enable **Default Outgoing** to use this for all outgoing emails
+6. Click **Save**
+
+### Option 2: Configure via bench command
+
+After the site is created, you can configure email via the command line:
+
+```bash
+# Enter the backend container
+docker compose exec backend bash
+
+# Set up email account
+bench --site ${SITE_NAME} set-config mail_server "smtp.example.com"
+bench --site ${SITE_NAME} set-config mail_port 587
+bench --site ${SITE_NAME} set-config use_tls 1
+bench --site ${SITE_NAME} set-config mail_login "your-email@example.com"
+bench --site ${SITE_NAME} set-config mail_password "your_smtp_password"
+bench --site ${SITE_NAME} set-config auto_email_id "noreply@your-domain.com"
+```
+
+### Common SMTP Settings
+
+| Provider | SMTP Server | Port | Encryption | Notes |
+|----------|-------------|------|------------|-------|
+| **Gmail** | smtp.gmail.com | 587 | TLS | Requires App Password |
+| **Google Workspace** | smtp.gmail.com | 587 | TLS | Requires App Password |
+| **Office 365** | smtp.office365.com | 587 | TLS | May need App Password with MFA |
+| **Outlook.com** | smtp-mail.outlook.com | 587 | TLS | Standard login |
+| **Amazon SES** | email-smtp.{region}.amazonaws.com | 587 | TLS | IAM credentials |
+| **Mailgun** | smtp.mailgun.org | 587 | TLS | Domain credentials |
+| **SendGrid** | smtp.sendgrid.net | 587 | TLS | API key as password |
+| **Zoho Mail** | smtp.zoho.com | 587 | TLS | Standard login |
+
+### Gmail / Google Workspace Setup
+
+1. Enable 2-Factor Authentication on your Google account
+2. Go to **Google Account > Security > App Passwords**
+3. Generate a new App Password for "Mail"
+4. Use this App Password (not your regular password) as `SMTP_PASSWORD`
+
+### Testing Email Configuration
+
+```bash
+# Test email sending from within the container
+docker compose exec backend bench --site ${SITE_NAME} sendmail your-test-email@example.com
+
+# Check email queue
+docker compose exec backend bench --site ${SITE_NAME} show-pending-emails
+```
+
+## �🚨 Important Security Notes
 
 1. **Change all default passwords** in the .env file
 2. **Use strong passwords** (minimum 16 characters)
@@ -222,5 +309,5 @@ docker compose logs | grep -i "memory\|cpu\|limit"
 - [Docker Compose Reference](https://docs.docker.com/compose/)
 
 ---
-**Version**: ERPNext v15.83.0  
-**Last Updated**: October 15, 2025
+**Version**: ERPNext v16.0.1  
+**Last Updated**: January 2026

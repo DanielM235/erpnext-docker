@@ -6,202 +6,120 @@ This guide covers essential security considerations for deploying ERPNext in pro
 
 ---
 
-## 1. 👤 User Management and Docker Compose Execution
+## 1. 👤 User Management and File Permissions
 
-### Understanding Docker User Mapping
+### Understanding Docker User in Official Images
 
-**CRITICAL CONCEPT**: Docker user mapping involves TWO different users:
+**IMPORTANT**: The official `frappe/erpnext` Docker images run as a **fixed user**:
 
-1. **Host User**: The user on your server who runs `docker compose`
-2. **Container User**: The user ID inside the container (configured via `DOCKER_USER_ID`)
+| Property | Value | Notes |
+|----------|-------|-------|
+| Username | `frappe` | Created inside the container |
+| UID | `1000` | **Fixed - cannot be changed at runtime** |
+| GID | `1000` | **Fixed - cannot be changed at runtime** |
 
-The Docker Compose configuration uses `user: "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}"` which:
-- **Inside container**: Process runs as this UID/GID
-- **On host filesystem**: Files are owned by the corresponding host user with same UID
-- **Security benefit**: Avoids running containers as root
+This is baked into the Docker image during build time. You **cannot** change the UID by setting environment variables - the images are pre-built with files owned by UID 1000.
 
-**Key principle**: The `DOCKER_USER_ID` should match the UID of your host user for proper file permissions.
+### Why UID 1000?
 
-### Step 1: Check Current User Situation
+- UID 1000 is typically the first regular user created on Linux systems
+- The Frappe Docker images use `useradd` without specifying a UID, which assigns 1000 on a fresh image
+- All files in `/home/frappe/frappe-bench/` are owned by UID 1000
 
-First, understand your server's user configuration:
+### Setting Up File Permissions
+
+Since the container runs as UID 1000, your host directories must be accessible by UID 1000:
+
+#### Option A: UID 1000 Exists on Your System (Most Common) ✅
+
 ```bash
-# Check if UID 1000 exists and what user it belongs to
-id 1000 2>/dev/null && echo "UID 1000 exists" || echo "UID 1000 not found"
+# Check if UID 1000 exists
 getent passwd 1000
 
-# Check your current user's UID (this is important!)
-whoami
-id -u
-id -g
+# If it's a regular user, you can use them or create the data directories:
+mkdir -p data/{sites,logs,db,redis_queue}
+sudo chown -R 1000:1000 data/
+chmod -R 755 data/
 ```
 
-### Step 2: Choose Your Strategy
+#### Option B: Create a User with UID 1000 ⭐ RECOMMENDED
 
-**Strategy A: Use Existing User with UID 1000** ✅ **SIMPLEST**
-- If UID 1000 exists and belongs to a regular user
-- Use default configuration (no changes needed)
-
-**Strategy B: Create Dedicated User with UID 1000** ⭐ **RECOMMENDED**
-- If UID 1000 is free
-- Create dedicated ERPNext user
-
-**Strategy C: Use Different UID** 🔧 **MOST FLEXIBLE**
-- If UID 1000 is unavailable or you prefer different user
-- Requires updating environment variables
-
-### Step 3: Implementation Based on Your Strategy
-
-#### **Strategy A: Use Existing UID 1000 User**
 ```bash
-# Add existing user to docker group (replace 'username' with actual username)
-sudo usermod -aG docker username
+# Check if UID 1000 is available
+id 1000 2>/dev/null && echo "UID 1000 exists" || echo "UID 1000 is available"
 
-# Verify docker group membership
-groups username
-
-# Keep default .env configuration (DOCKER_USER_ID=1000)
-# No changes needed to environment variables
-```
-
-#### **Strategy B: Create Dedicated User with UID 1000** ⭐ **RECOMMENDED**
-```bash
-# Create erpnext user with specific UID 1000
-sudo useradd -u 1000 -g users -m -s /bin/bash erpnext
-
-# Add to docker group
+# If available, create a dedicated erpnext user with UID 1000
+sudo useradd -u 1000 -m -s /bin/bash erpnext
 sudo usermod -aG docker erpnext
 
-# Set password for the user
-sudo passwd erpnext
-
-# Keep default .env configuration (DOCKER_USER_ID=1000)
-# No changes needed to environment variables
+# Create directories
+sudo -u erpnext mkdir -p data/{sites,logs,db,redis_queue}
+chmod -R 755 data/
 ```
 
-#### **Strategy C: Use Different UID** 🔧 **FOR YOUR CASE**
+#### Option C: UID 1000 Is Taken by System User ⚠️
 
-Since UID 1000 is not available on your server, this is your approach:
+If UID 1000 belongs to a system/service account you can't use:
 
 ```bash
-# Create erpnext user (system will assign available UID)
-sudo useradd -m -s /bin/bash erpnext
-sudo usermod -aG docker erpnext
-sudo passwd erpnext
-
-# Find the assigned UID and GID
-NEW_UID=$(id -u erpnext)
-NEW_GID=$(id -g erpnext)
-echo "ERPNext user created with UID: $NEW_UID, GID: $NEW_GID"
-
-# Update .env file with the new UID/GID
-echo "DOCKER_USER_ID=$NEW_UID" >> .env
-echo "DOCKER_GROUP_ID=$NEW_GID" >> .env
-
-# Example: if erpnext user gets UID 1001
-# Your .env file should contain:
-# DOCKER_USER_ID=1001
-# DOCKER_GROUP_ID=1001
+# Create directories as root and set ownership to UID 1000
+sudo mkdir -p data/{sites,logs,db,redis_queue}
+sudo chown -R 1000:1000 data/
+chmod -R 755 data/
 ```
 
-**Important**: After creating the user, you must update the environment variables in `.env` file!
+This works because Docker maps by UID number, not username. Even if no user with UID 1000 exists on your host, the container will still work correctly.
 
 ### 🛡️ Security Recommendations for User Management
 
-1. **Dedicated User**: Always create a dedicated user for ERPNext
-2. **Limited Privileges**: The user should only have Docker access, no sudo
-3. **Strong Authentication**: Use strong passwords or SSH keys
-4. **Home Directory Permissions**: Secure the user's home directory
+1. **Dedicated User**: If possible, create a dedicated user with UID 1000 named `erpnext`
+2. **Docker Group**: Add the user to the docker group for running compose commands
+3. **Limited Privileges**: The user should only have Docker access, not sudo
+4. **Project Directory**: Store the project in a dedicated location
 ```bash
-# Set secure permissions for erpnext user home
-sudo chmod 750 /home/erpnext
-sudo chown erpnext:erpnext /home/erpnext
-
-# Create ERPNext project directory with proper ownership
+# Set up project directory
 sudo mkdir -p /opt/erpnext
-sudo chown erpnext:erpnext /opt/erpnext
+sudo chown 1000:1000 /opt/erpnext
 sudo chmod 755 /opt/erpnext
 ```
 
-### 📂 **Docker User Mapping and File Permissions - CRITICAL UNDERSTANDING**
+### 📂 Understanding Volume Permissions
 
-**How Docker User Mapping Works:**
+**How it works:**
+1. Container process runs as UID 1000 inside the container
+2. Files created in mounted volumes are owned by UID 1000 on the host
+3. Your host must allow UID 1000 to read/write the data directories
 
-1. **Container Internal User**: Process inside container runs as `DOCKER_USER_ID:DOCKER_GROUP_ID`
-2. **Host File Ownership**: Files created by container are owned by host user with same UID
-3. **Permission Match**: Host user UID must match container UID for proper access
-
-**Example with UID 1001:**
+**Verification:**
 ```bash
-# You create user with UID 1001
-sudo useradd -u 1001 erpnext
+# After starting containers, check file ownership
+ls -la data/sites/
+# Should show files owned by UID 1000 (or your erpnext user)
 
-# You set in .env: DOCKER_USER_ID=1001
-echo "DOCKER_USER_ID=1001" >> .env
-
-# Container runs as UID 1001 internally
-# Files created by container = owned by erpnext user (UID 1001) on host
-# Perfect permission alignment! ✅
+# Verify container is running as expected
+docker compose exec backend id
+# Output: uid=1000(frappe) gid=1000(frappe) groups=1000(frappe)
 ```
 
-### 🎯 **Best Practice for File Permissions**
-
-**ALWAYS match host user UID with container UID:**
+### ⚡ Quick Setup Summary
 
 ```bash
-# After creating your user and updating .env, set up directories
-# Use the SAME user that will run docker compose
+# 1. Create directories with correct permissions
+mkdir -p data/{sites,logs,db,redis_queue}
+sudo chown -R 1000:1000 data/
 
-# Method 1: Run as the erpnext user (RECOMMENDED)
-sudo -u erpnext mkdir -p data/{sites,logs,db,redis_queue}
-sudo -u erpnext chmod -R 755 data/
-
-# Method 2: Create as root then change ownership to match DOCKER_USER_ID
-sudo mkdir -p data/{sites,logs,db,redis_queue}
-sudo chown -R $(id -u erpnext):$(id -g erpnext) data/
-sudo chmod -R 755 data/
-
-# Verify ownership matches your DOCKER_USER_ID
-ls -la data/
-# Should show: drwxr-xr-x erpnext erpnext (or your user)
-```
-
-### ⚡ **Quick Setup for Your Case (UID 1000 Not Available)**
-
-**Complete procedure:**
-```bash
-# 1. Create dedicated user (gets available UID, e.g., 1001)
-sudo useradd -m -s /bin/bash erpnext
-sudo usermod -aG docker erpnext
-sudo passwd erpnext
-
-# 2. Find assigned UID/GID
-USER_UID=$(id -u erpnext)
-USER_GID=$(id -g erpnext)
-echo "User UID: $USER_UID, GID: $USER_GID"
-
-# 3. Update .env file
+# 2. Copy and configure environment
 cp .env.example .env
-echo "DOCKER_USER_ID=$USER_UID" >> .env
-echo "DOCKER_GROUP_ID=$USER_GID" >> .env
+nano .env  # Set SITE_NAME, passwords, etc.
 
-# 4. Create directories as the erpnext user
-sudo -u erpnext mkdir -p /opt/erpnext/data/{sites,logs,db,redis_queue}
-sudo -u erpnext chmod -R 755 /opt/erpnext/data/
-
-# 5. Set .env file permissions
-sudo chown erpnext:erpnext .env
-sudo chmod 600 .env
-
-# 6. Run Docker Compose as erpnext user
-sudo -u erpnext docker compose up -d
+# 3. Start services
+docker compose pull
+docker compose up -d
 ```
-
-### Running Docker Compose Securely
 
 **Best practices for execution:**
 ```bash
-# Switch to erpnext user
+# Switch to erpnext user (if you created one with UID 1000)
 sudo -u erpnext bash
 
 # Navigate to project directory
@@ -219,25 +137,31 @@ docker compose logs -f
 
 **⚠️ NEVER run Docker Compose as root unless absolutely necessary**
 
-### 🔍 **Troubleshooting Permission Issues**
+### 🔍 Troubleshooting Permission Issues
 
 **If you see permission errors:**
 ```bash
-# Check if UID matches between host and container
-echo "Host user UID: $(id -u erpnext)"
-echo "Container UID from .env: $(grep DOCKER_USER_ID .env)"
+# Verify container is running as UID 1000
+docker compose exec backend id
+# Expected: uid=1000(frappe) gid=1000(frappe) groups=1000(frappe)
 
 # Check data directory ownership
 ls -la data/
-# Should be owned by erpnext user
+# Should show UID 1000
 
-# Fix ownership if needed
-sudo chown -R $(id -u erpnext):$(id -g erpnext) data/
+# Fix ownership if needed (must be UID 1000!)
+sudo chown -R 1000:1000 data/
 
-# Check container user ID is correct
-docker compose exec backend id
-# Should show uid=1001(frappe) or whatever your DOCKER_USER_ID is
+# Check if any files have wrong permissions
+find data/ ! -user 1000 -ls
 ```
+
+### 🚨 Important Notes About UID
+
+1. **Cannot customize UID at runtime**: The official images have UID 1000 baked in
+2. **Building custom images**: If you need a different UID, you must build your own images with `--build-arg USER_ID=...`
+3. **Rootless Docker**: Works fine with UID namespace remapping
+4. **SELinux/AppArmor**: May require additional configuration for volume mounts
 
 ---
 

@@ -1,6 +1,6 @@
 # ERPNext Production Docker Compose Configuration
 # =================================================================
-# Production-ready Docker Compose setup for ERPNext v15.83.0
+# Production-ready Docker Compose setup for ERPNext v16.0.1
 # Based on official Frappe Docker repository guidelines
 # Optimized for Debian 12 with host-level Nginx reverse proxy
 # 
@@ -10,39 +10,206 @@
 # - MariaDB (Database - officially recommended by Frappe)
 # - Redis Cache (Session and object caching)
 # - Redis Queue (Background job processing)
+# - WebSocket (Real-time communications)
+# - Scheduler (Scheduled tasks)
+# - Queue Workers (Background job processing)
 # - Configurator (Initial setup and site management)
+#
+# v16 Changes from v15:
+# - Updated to Python 3.12+ and Node 22+
+# - Improved WebSocket handling
+# - Enhanced Redis configuration with FRAPPE_REDIS_* environment variables
+# - Better platform support (linux/amd64, linux/arm64)
+# - Updated default resource limits
 # =================================================================
 
 # Docker Compose version 2.x syntax (no version field needed)
 # Uses modern Docker Compose features and best practices
-name: erpnext-production
+name: ${COMPOSE_PROJECT_NAME:-erpnext-prod}
+
+# =================================================================
+# YAML Anchors for DRY Configuration
+# =================================================================
+x-customizable-image: &customizable_image
+  image: frappe/erpnext:v${ERPNEXT_VERSION:-16.0.1}
+  pull_policy: ${PULL_POLICY:-always}
+
+x-common-settings: &common_settings
+  restart: ${RESTART_POLICY:-unless-stopped}
+  security_opt:
+    - no-new-privileges:true
+  networks:
+    - frappe_network
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "${LOG_MAX_SIZE:-10m}"
+      max-file: "${LOG_MAX_FILES:-5}"
+
+x-backend-defaults: &backend_defaults
+  <<: [*customizable_image, *common_settings]
+  platform: linux/amd64
+  volumes:
+    - erpnext_sites:/home/frappe/frappe-bench/sites:rw
+    - erpnext_logs:/home/frappe/frappe-bench/logs:rw
+
+x-redis-environment: &redis_environment
+  FRAPPE_REDIS_CACHE: redis://redis-cache:6379
+  FRAPPE_REDIS_QUEUE: redis://redis-queue:6379
 
 services:
+  # =================================================================
+  # ERPNext Configurator and Site Management
+  # =================================================================
+  # Handles initial setup, site creation, and configuration management
+  # Runs once during deployment and exits on completion
+  configurator:
+    <<: *customizable_image
+    container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_configurator
+    platform: linux/amd64
+    
+    restart: "on-failure"
+    
+    networks:
+      - frappe_network
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+      restart_policy:
+        condition: none
+    
+    security_opt:
+      - no-new-privileges:true
+    
+    volumes:
+      - erpnext_sites:/home/frappe/frappe-bench/sites:rw
+      - erpnext_logs:/home/frappe/frappe-bench/logs:rw
+    
+    environment:
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-3306}
+      REDIS_CACHE: redis-cache:6379
+      REDIS_QUEUE: redis-queue:6379
+      SOCKETIO_PORT: "9000"
+    
+    entrypoint:
+      - bash
+      - -c
+    
+    # Configuration commands based on official frappe_docker
+    # Sets up common_site_config.json for all services
+    command:
+      - >
+        ls -1 apps > sites/apps.txt;
+        bench set-config -g db_host $$DB_HOST;
+        bench set-config -gp db_port $$DB_PORT;
+        bench set-config -g redis_cache "redis://$$REDIS_CACHE";
+        bench set-config -g redis_queue "redis://$$REDIS_QUEUE";
+        bench set-config -g redis_socketio "redis://$$REDIS_QUEUE";
+        bench set-config -gp socketio_port $$SOCKETIO_PORT;
+    
+    depends_on: {}
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILES:-5}"
+        labels: "service=erpnext-configurator"
+
+  # =================================================================
+  # Site Creator Service
+  # =================================================================
+  # Creates the ERPNext site after configuration is complete
+  create-site:
+    <<: *customizable_image
+    container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_create_site
+    platform: linux/amd64
+    
+    restart: "no"
+    
+    networks:
+      - frappe_network
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+      restart_policy:
+        condition: none
+    
+    security_opt:
+      - no-new-privileges:true
+    
+    volumes:
+      - erpnext_sites:/home/frappe/frappe-bench/sites:rw
+      - erpnext_logs:/home/frappe/frappe-bench/logs:rw
+    
+    entrypoint:
+      - bash
+      - -c
+    
+    command:
+      - >
+        wait-for-it -t 120 db:3306;
+        wait-for-it -t 120 redis-cache:6379;
+        wait-for-it -t 120 redis-queue:6379;
+        export start=`date +%s`;
+        until [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".db_host // empty"` ]] && \
+              [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_cache // empty"` ]] && \
+              [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_queue // empty"` ]];
+        do
+          echo "Waiting for sites/common_site_config.json to be created";
+          sleep 5;
+          if (( `date +%s`-start > 120 )); then
+            echo "could not find sites/common_site_config.json with required keys";
+            exit 1
+          fi
+        done;
+        echo "sites/common_site_config.json found";
+        if [[ ! -d "sites/${SITE_NAME}" ]]; then
+          echo "Creating site ${SITE_NAME}...";
+          bench new-site --mariadb-user-host-login-scope='%' --admin-password=${ADMIN_PASSWORD} --db-root-username=root --db-root-password=${DB_ROOT_PASSWORD} --install-app erpnext --set-default ${SITE_NAME};
+        else
+          echo "Site ${SITE_NAME} already exists, skipping creation";
+        fi
+    
+    environment:
+      SITE_NAME: ${SITE_NAME:-frontend}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      redis-queue:
+        condition: service_healthy
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILES:-5}"
+        labels: "service=erpnext-create-site"
+
   # =================================================================
   # ERPNext Backend Application Server
   # =================================================================
   # Handles API requests, web interface, and business logic
   # Runs Gunicorn WSGI server with Frappe framework
   backend:
-    # Use specific version tag for production stability
-    # v15.83.0 is the latest stable release as of October 2025
-    image: frappe/erpnext:v${ERPNEXT_VERSION:-15.83.0}
+    <<: *backend_defaults
     container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_backend
     
-    # Always restart unless explicitly stopped
-    # Essential for production uptime and automatic recovery
-    restart: unless-stopped
-    
-    # Security: Run as non-root user (frappe user inside container)
-    # User ID must match host user for proper file permissions
-    # Configure DOCKER_USER_ID and DOCKER_GROUP_ID in .env file
-    
-    # Network configuration for service communication and reverse proxy
-    networks:
-      - frappe_network
-    
     # Production resource limits to prevent resource exhaustion
-    # Adjust based on your server specifications and load requirements
     deploy:
       resources:
         limits:
@@ -51,75 +218,30 @@ services:
         reservations:
           cpus: '${BACKEND_CPU_RESERVE:-0.5}'
           memory: ${BACKEND_MEMORY_RESERVE:-1G}
+      restart_policy:
+        condition: on-failure
     
     # Health check to monitor application status
-    # Enables automatic restart on failure and load balancer health checks
+    # Uses the site name from SITE_NAME environment variable in the Host header
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/method/frappe.utils.get_site_info || exit 1"]
+      test: ["CMD-SHELL", "curl -sf -H 'Host: ${SITE_NAME:-frontend}' http://localhost:8000/api/method/frappe.ping || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 120s  # Allow extra time for ERPNext to fully initialize
+      start_period: 120s
     
-    # Security hardening options
-    security_opt:
-      - no-new-privileges:true  # Prevent privilege escalation
-    
-    # Expose internal port for frontend service communication
-    # Port 8000 is the standard Gunicorn port for ERPNext
     expose:
       - "8000"
     
-    # Persistent storage for ERPNext sites and application logs
-    # Critical: Contains all your business data and configurations
-    volumes:
-      - erpnext_sites:/home/frappe/frappe-bench/sites:rw
-      - erpnext_logs:/home/frappe/frappe-bench/logs:rw
-      # Optional: Custom apps and configurations
-      # - ./custom_apps:/home/frappe/frappe-bench/apps/custom:ro
-    
-    # Environment variables for ERPNext configuration
-    # Most sensitive values come from .env file
-    environment:
-      # Database connection configuration
-      DB_HOST: ${DB_HOST:-db}
-      DB_PORT: ${DB_PORT:-3306}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      
-      # Redis configuration for caching and job queue
-      REDIS_CACHE: "redis-cache:6379"
-      REDIS_QUEUE: "redis-queue:6379"
-      
-      # ERPNext application settings
-      FRAPPE_SITE_NAME_HEADER: ${SITE_NAME}
-      DEVELOPER_MODE: ${DEVELOPER_MODE:-0}
-      
-      # Performance tuning
-      # WORKER_CLASS: ${WORKER_CLASS:-sync}
-      # WORKERS: ${BACKEND_WORKERS:-4}
-      # TIMEOUT: ${BACKEND_TIMEOUT:-300}
-    
-    # Service dependencies - ensure infrastructure is ready
     depends_on:
+      configurator:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
       redis-cache:
         condition: service_healthy
       redis-queue:
         condition: service_healthy
-    
-    # Logging configuration for production monitoring
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "${LOG_MAX_SIZE:-10m}"
-        max-file: "${LOG_MAX_FILES:-5}"
-        labels: "service=erpnext-backend"
   
   # =================================================================
   # ERPNext Frontend Web Server
@@ -127,13 +249,12 @@ services:
   # Nginx server for static files and reverse proxy to backend
   # Handles file uploads, static assets, and HTTP request routing
   frontend:
-    # Same image as backend but runs nginx-entrypoint.sh
-    image: frappe/erpnext:v${ERPNEXT_VERSION:-15.83.0}
+    <<: *customizable_image
     container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_frontend
+    platform: linux/amd64
     
-    restart: unless-stopped
+    restart: ${RESTART_POLICY:-unless-stopped}
     
-    # Frontend only needs access to proxy network and backend communication
     networks:
       - frappe_network
     
@@ -143,10 +264,13 @@ services:
         limits:
           cpus: '${FRONTEND_CPU_LIMIT:-1.0}'
           memory: ${FRONTEND_MEMORY_LIMIT:-1G}
+      restart_policy:
+        condition: on-failure
     
     # Health check for nginx web server
+    # Uses the site name from SITE_NAME environment variable in the Host header
     healthcheck:
-      test: ["CMD-SHELL", "curl -f -H 'Host: ${SITE_NAME}' http://localhost:8080 || exit 1"]
+      test: ["CMD-SHELL", "curl -sf -H 'Host: ${SITE_NAME:-frontend}' http://localhost:8080 || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -156,39 +280,30 @@ services:
       - no-new-privileges:true
     
     # Expose port for host nginx reverse proxy
-    # This port will be accessed by your host-level Nginx
-    # Port can be customized via FRONTEND_PORT in .env file
     ports:
       - "${FRONTEND_PORT:-8080}:8080"
     
-    # Share sites volume for static file serving
     volumes:
       - erpnext_sites:/home/frappe/frappe-bench/sites:ro
       - erpnext_logs:/home/frappe/frappe-bench/logs:rw
     
     # Nginx-specific configuration
     environment:
-      # Backend server for reverse proxy
       BACKEND: backend:8000
       SOCKETIO: websocket:9000
-      UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
-      UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
-      UPSTREAM_REAL_IP_RECURSIVE: "off"
-      FRAPPE_SITE_NAME_HEADER: ${SITE_NAME}
-      
-      # Nginx performance settings
-      CLIENT_MAX_BODY_SIZE: ${MAX_UPLOAD_SIZE:-50m}
-      PROXY_READ_TIMEOUT: ${PROXY_TIMEOUT:-300}
-      
-      # Enable gzip compression for better performance
-      GZIP_COMPRESSION: "on"
+      FRAPPE_SITE_NAME_HEADER: ${FRAPPE_SITE_NAME_HEADER:-$$host}
+      UPSTREAM_REAL_IP_ADDRESS: ${UPSTREAM_REAL_IP_ADDRESS:-127.0.0.1}
+      UPSTREAM_REAL_IP_HEADER: ${UPSTREAM_REAL_IP_HEADER:-X-Forwarded-For}
+      UPSTREAM_REAL_IP_RECURSIVE: ${UPSTREAM_REAL_IP_RECURSIVE:-off}
+      PROXY_READ_TIMEOUT: ${PROXY_READ_TIMEOUT:-120}
+      CLIENT_MAX_BODY_SIZE: ${CLIENT_MAX_BODY_SIZE:-50m}
     
-    # Override default command to run nginx
-    command: ["nginx-entrypoint.sh"]
+    command:
+      - nginx-entrypoint.sh
     
     depends_on:
-      websocket:
-        condition: service_started
+      - backend
+      - websocket
     
     logging:
       driver: "json-file"
@@ -203,135 +318,112 @@ services:
   # Handles real-time communication for ERPNext features
   # Required for live notifications, real-time updates, and chat
   websocket:
-    image: frappe/erpnext:v${ERPNEXT_VERSION:-15.83.0}
+    <<: *backend_defaults
     container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_websocket
     
-    restart: unless-stopped
-    
-    networks:
-      - frappe_network
-    
-    environment:
-      DB_HOST: ${DB_HOST:-db}
-      DB_PORT: ${DB_PORT:-3306}
-      REDIS_CACHE: "redis-cache:6379"
-      REDIS_QUEUE: "redis-queue:6379"
-      REDIS_SOCKETIO: "redis-cache:6379"
-      FRAPPE_SITE_NAME_HEADER: ${SITE_NAME}
-
     deploy:
       resources:
         limits:
           cpus: '${WEBSOCKET_CPU_LIMIT:-0.5}'
           memory: ${WEBSOCKET_MEMORY_LIMIT:-512M}
+      restart_policy:
+        condition: on-failure
     
-    security_opt:
-      - no-new-privileges:true
+    environment:
+      <<: *redis_environment
     
-    volumes:
-      - erpnext_sites:/home/frappe/frappe-bench/sites:ro
-      - erpnext_logs:/home/frappe/frappe-bench/logs:rw
-    
-    # WebSocket specific startup command
-    command: ["node", "/home/frappe/frappe-bench/apps/frappe/socketio.js"]
+    command:
+      - node
+      - /home/frappe/frappe-bench/apps/frappe/socketio.js
     
     depends_on:
-      db:
-        condition: service_healthy
-    
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "${LOG_MAX_SIZE:-10m}"
-        max-file: "${LOG_MAX_FILES:-5}"
-        labels: "service=erpnext-websocket"
+      configurator:
+        condition: service_completed_successfully
+
+  # =================================================================
+  # Queue Workers
+  # =================================================================
+  # Process background jobs for ERPNext
+  # Long queue handles: Email, Reports, Data Import/Export
   queue-long:
-    image: frappe/erpnext:v${ERPNEXT_VERSION:-15.83.0}
+    <<: *backend_defaults
     container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_queue_long
-    
-    restart: unless-stopped
-    
-    networks:
-      - frappe_network
     
     deploy:
       resources:
         limits:
           cpus: '${QUEUE_CPU_LIMIT:-1.0}'
-          memory: ${QUEUE_MEMORY_LIMIT:-1G}
-    
-    volumes:
-      - erpnext_sites:/home/frappe/frappe-bench/sites:rw
-      - erpnext_logs:/home/frappe/frappe-bench/logs:rw
+          memory: ${QUEUE_MEMORY_LIMIT:-2G}
+      restart_policy:
+        condition: on-failure
     
     environment:
-      DB_HOST: ${DB_HOST:-db}
-      DB_PORT: ${DB_PORT:-3306}
-      REDIS_CACHE: "redis-cache:6379"
-      REDIS_QUEUE: "redis-queue:6379"
-      FRAPPE_SITE_NAME_HEADER: ${SITE_NAME}
+      <<: *redis_environment
     
-    command: ["bench", "worker", "--queue", "long,default,short"]
+    command: bench worker --queue long,default,short
     
     depends_on:
-      db:
-        condition: service_healthy
-      redis-queue:
-        condition: service_healthy
+      configurator:
+        condition: service_completed_successfully
 
+  # Short queue handles: Quick operations, Realtime updates
   queue-short:
-    image: frappe/erpnext:v${ERPNEXT_VERSION:-15.83.0}
+    <<: *backend_defaults
     container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_queue_short
-    
-    restart: unless-stopped
-    
-    networks:
-      - frappe_network
     
     deploy:
       resources:
         limits:
           cpus: '${QUEUE_CPU_LIMIT:-0.5}'
-          memory: ${QUEUE_MEMORY_LIMIT:-512M}
-    
-    volumes:
-      - erpnext_sites:/home/frappe/frappe-bench/sites:rw
-      - erpnext_logs:/home/frappe/frappe-bench/logs:rw
+          memory: ${QUEUE_MEMORY_LIMIT:-1G}
+      restart_policy:
+        condition: on-failure
     
     environment:
-      DB_HOST: ${DB_HOST:-db}
-      DB_PORT: ${DB_PORT:-3306}
-      REDIS_CACHE: "redis-cache:6379"
-      REDIS_QUEUE: "redis-queue:6379"
-      FRAPPE_SITE_NAME_HEADER: ${SITE_NAME}
+      <<: *redis_environment
     
-    command: ["bench", "worker", "--queue", "short,default"]
+    command: bench worker --queue short,default
     
     depends_on:
-      db:
-        condition: service_healthy
-      redis-queue:
-        condition: service_healthy
+      configurator:
+        condition: service_completed_successfully
+
+  # =================================================================
+  # Scheduler Service
+  # =================================================================
+  # Runs scheduled tasks: Daily backups, Email digest, Recurring invoices
+  scheduler:
+    <<: *backend_defaults
+    container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_scheduler
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '${SCHEDULER_CPU_LIMIT:-0.5}'
+          memory: ${SCHEDULER_MEMORY_LIMIT:-1G}
+      restart_policy:
+        condition: on-failure
+    
+    command: bench schedule
+    
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
 
   # =================================================================
   # MariaDB Database Server
   # =================================================================
   # Primary data storage for ERPNext
-  # MariaDB is officially recommended over PostgreSQL for ERPNext
-  # Provides better compatibility and performance for Frappe framework
+  # MariaDB 10.6 is officially recommended by Frappe for v16
   db:
-    # Use MariaDB 10.11 LTS for stability and long-term support
-    # This version is well-tested with ERPNext and provides security updates
-    image: mariadb:${DB_VERSION:-10.11}
+    image: mariadb:${DB_VERSION:-10.6}
     container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_database
     
-    restart: unless-stopped
+    restart: ${RESTART_POLICY:-unless-stopped}
     
-    # Run database in backend network only (no external access)
     networks:
       - frappe_network
     
-    # Database needs significant resources for good performance
     deploy:
       resources:
         limits:
@@ -339,10 +431,10 @@ services:
           memory: ${DB_MEMORY_LIMIT:-4G}
         reservations:
           cpus: '${DB_CPU_RESERVE:-0.5}'
-          memory: ${DB_MEMORY_RESERVE:-0.5G}
+          memory: ${DB_MEMORY_RESERVE:-512M}
+      restart_policy:
+        condition: on-failure
     
-    # Critical health check for database availability
-    # ERPNext cannot function without database connection
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--password=${DB_ROOT_PASSWORD}"]
       interval: 10s
@@ -354,37 +446,26 @@ services:
       - no-new-privileges:true
     
     # Database optimization parameters for ERPNext
-    # These settings improve performance and compatibility
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --skip-character-set-client-handshake
       - --skip-innodb-read-only-compressed
-      # Performance optimizations for production
+      # Performance optimizations
       - --innodb-buffer-pool-size=${DB_INNODB_BUFFER_POOL_SIZE:-2G}
       - --innodb-log-file-size=${DB_INNODB_LOG_FILE_SIZE:-256M}
       - --max-connections=${DB_MAX_CONNECTIONS:-200}
-      - --query-cache-size=${DB_QUERY_CACHE_SIZE:-64M}
-      - --query-cache-type=1
-      # Security settings
-      - --bind-address=0.0.0.0
+      # Disable query cache (deprecated in MariaDB 10.6+)
+      - --query-cache-type=0
+      - --query-cache-size=0
     
-    # Database credentials from environment variables
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      # Timezone configuration
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       TZ: ${TIMEZONE:-UTC}
     
-    # Persistent database storage - CRITICAL for data preservation
     volumes:
       - erpnext_db_data:/var/lib/mysql:rw
-      # Optional: Custom MySQL configuration
-      # - ./mysql/conf.d:/etc/mysql/conf.d:ro
-      # Optional: Database initialization scripts
-      # - ./mysql/init:/docker-entrypoint-initdb.d:ro
     
     logging:
       driver: "json-file"
@@ -397,15 +478,12 @@ services:
   # Redis Cache Server
   # =================================================================
   # Handles session storage, object caching, and temporary data
-  # Significantly improves ERPNext performance and user experience
   redis-cache:
-    # Use Redis 7 Alpine for smaller footprint and security updates
     image: redis:${REDIS_VERSION:-7-alpine}
     container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_redis_cache
     
-    restart: unless-stopped
+    restart: ${RESTART_POLICY:-unless-stopped}
     
-    # Redis runs as non-root user in Alpine image
     networks:
       - frappe_network
     
@@ -417,32 +495,30 @@ services:
         reservations:
           cpus: '0.1'
           memory: 128M
+      restart_policy:
+        condition: on-failure
     
     healthcheck:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
       interval: 30s
       timeout: 3s
       retries: 3
-      start_period: 30s
+      start_period: 10s
     
     security_opt:
       - no-new-privileges:true
     
     # Redis optimization for caching workload
-    command: 
+    command:
       - redis-server
       - --maxmemory
       - ${REDIS_CACHE_MAXMEMORY:-512mb}
       - --maxmemory-policy
       - allkeys-lru
       - --save
-      - ""  # Disable persistence for cache (optional)
+      - ""
       - --appendonly
       - "no"
-    
-    # Optional persistent storage for cache (comment out for pure cache)
-    # volumes:
-    #   - erpnext_redis_cache:/data
     
     logging:
       driver: "json-file"
@@ -455,12 +531,11 @@ services:
   # Redis Queue Server
   # =================================================================
   # Handles background job processing, email sending, and scheduled tasks
-  # Separate from cache to prevent job loss during cache evictions
   redis-queue:
     image: redis:${REDIS_VERSION:-7-alpine}
     container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_redis_queue
     
-    restart: unless-stopped
+    restart: ${RESTART_POLICY:-unless-stopped}
     
     networks:
       - frappe_network
@@ -470,31 +545,31 @@ services:
         limits:
           cpus: '${REDIS_CPU_LIMIT:-0.5}'
           memory: ${REDIS_QUEUE_MEMORY_LIMIT:-512M}
+      restart_policy:
+        condition: on-failure
     
     healthcheck:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
       interval: 30s
       timeout: 3s
       retries: 3
-      start_period: 30s
+      start_period: 10s
     
     security_opt:
       - no-new-privileges:true
     
-    # Queue-optimized Redis configuration
-    # Persistence enabled to prevent job loss
+    # Queue-optimized Redis configuration with persistence
     command:
       - redis-server
       - --maxmemory
       - ${REDIS_QUEUE_MAXMEMORY:-256mb}
       - --maxmemory-policy
-      - noeviction  # Never evict queue jobs
+      - noeviction
       - --appendonly
       - "yes"
       - --appendfsync
       - everysec
     
-    # Persistent storage for job queue (important for reliability)
     volumes:
       - erpnext_redis_queue:/data
     
@@ -504,146 +579,13 @@ services:
         max-size: "${LOG_MAX_SIZE:-10m}"
         max-file: "${LOG_MAX_FILES:-5}"
         labels: "service=erpnext-redis-queue"
-  
-  # =================================================================
-  # ERPNext Configurator and Site Management
-  # =================================================================
-  # Handles initial setup, site creation, and configuration management
-  # Runs once during deployment or when configuration changes are needed
 
-
-  configurator:
-    image: frappe/erpnext:v${ERPNEXT_VERSION:-15.83.0}
-    container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_configurator
-    
-    # Run only when explicitly needed (not automatically restarted)
-    restart: "no"
-    
-    networks:
-      - frappe_network
-    
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 1G
-    
-    security_opt:
-      - no-new-privileges:true
-    
-    volumes:
-      - erpnext_sites:/home/frappe/frappe-bench/sites:rw
-      - erpnext_logs:/home/frappe/frappe-bench/logs:rw
-    
-    environment:
-      DB_HOST: ${DB_HOST:-db}
-      DB_PORT: ${DB_PORT:-3306}
-      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      SITE_NAME: ${SITE_NAME}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      REDIS_CACHE: "redis-cache:6379"
-      REDIS_QUEUE: "redis-queue:6379"
-      FRAPPE_SITE_NAME_HEADER: ${SITE_NAME}
-
-    # Site configuration and setup commands
-    # This runs the initial ERPNext installation
-    entrypoint: ["bash", "-c"]
-
-    command:
-      - |
-        echo "Waiting for services..."
-        wait-for-it -t 120 db:3306
-        wait-for-it -t 120 redis-cache:6379
-        wait-for-it -t 120 redis-queue:6379
-        
-        echo "Setting configuration..."
-        bench set-config -g db_host "${DB_HOST}"
-        bench set-config -g db_port "${DB_PORT}"
-        bench set-config -g redis_cache "redis://${REDIS_CACHE}"
-        bench set-config -g redis_queue "redis://${REDIS_QUEUE}"
-        bench set-config -g redis_socketio "redis://${REDIS_CACHE}"
-        
-        echo "Configuration set. Creating site..."
-        if [ ! -f "sites/${SITE_NAME}/site_config.json" ]; then
-          echo "Creating new site: ${SITE_NAME}"
-          bench new-site ${SITE_NAME} \
-            --mariadb-user-host-login-scope='%' \
-            --admin-password="${ADMIN_PASSWORD}" \
-            --db-root-username=root \
-            --db-root-password="${DB_ROOT_PASSWORD}" \
-            --install-app erpnext \
-            --set-default
-        else
-          echo "Site ${SITE_NAME} already exists"
-        fi
-        
-        echo "Configuration completed successfully"
-
-    depends_on:
-      db:
-        condition: service_healthy
-      redis-cache:
-        condition: service_healthy
-      redis-queue:
-        condition: service_healthy
-    
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "${LOG_MAX_SIZE:-10m}"
-        max-file: "${LOG_MAX_FILES:-5}"
-        labels: "service=erpnext-configurator"
-
-  scheduler:
-      image: frappe/erpnext:v${ERPNEXT_VERSION:-15.83.0}
-      container_name: ${COMPOSE_PROJECT_NAME:-erpnext}_scheduler
-
-      restart: unless-stopped
-      security_opt:
-        - no-new-privileges:true
-
-      networks:
-        - frappe_network
-      deploy:
-        resources:
-          limits:
-            cpus: '${SCHEDULER_CPU_LIMIT:-0.5}'
-            memory: ${SCHEDULER_MEMORY_LIMIT:-512M}
-      
-      volumes:
-        - erpnext_sites:/home/frappe/frappe-bench/sites:rw
-        - erpnext_logs:/home/frappe/frappe-bench/logs:rw
-
-      environment:
-        DB_HOST: ${DB_HOST:-db}
-        DB_PORT: ${DB_PORT:-3306}
-        REDIS_CACHE: "redis-cache:6379"
-        REDIS_QUEUE: "redis-queue:6379"
-        FRAPPE_SITE_NAME_HEADER: ${SITE_NAME}
-      
-      command: ["bench", "schedule"]
-      
-      depends_on:
-        db:
-          condition: service_healthy
-        redis-queue:
-          condition: service_healthy
-      
-      logging:
-        driver: "json-file"
-        options:
-          max-size: "${LOG_MAX_SIZE:-10m}"
-          max-file: "${LOG_MAX_FILES:-5}"
-          labels: "service=erpnext-scheduler"
-
+# =================================================================
+# NETWORKS
+# =================================================================
 networks:
   frappe_network:
-    name: ${COMPOSE_PROJECT_NAME:-erpnext}_backend
+    name: ${COMPOSE_PROJECT_NAME:-erpnext}_network
     driver: bridge
 
 # =================================================================
@@ -653,7 +595,6 @@ networks:
 # These volumes contain all your business data and must be backed up
 volumes:
   # ERPNext sites data - Contains all site configurations, files, and uploads
-  # CRITICAL: This contains all your business data
   erpnext_sites:
     name: ${COMPOSE_PROJECT_NAME:-erpnext}_sites_data
     driver: local
@@ -672,7 +613,6 @@ volumes:
       device: ${DATA_PATH:-./data}/logs
   
   # Database storage - Contains all ERPNext business data
-  # CRITICAL: Most important volume - contains all your data
   erpnext_db_data:
     name: ${COMPOSE_PROJECT_NAME:-erpnext}_db_data
     driver: local
@@ -682,7 +622,6 @@ volumes:
       device: ${DATA_PATH:-./data}/db
   
   # Redis queue persistence - Background jobs and queue data
-  # Important for preventing job loss during restarts
   erpnext_redis_queue:
     name: ${COMPOSE_PROJECT_NAME:-erpnext}_redis_queue
     driver: local
@@ -692,37 +631,25 @@ volumes:
       device: ${DATA_PATH:-./data}/redis_queue
 
 # =================================================================
-# PRODUCTION DEPLOYMENT NOTES
+# PRODUCTION DEPLOYMENT NOTES (Debian 12 + Host Nginx)
 # =================================================================
 # 1. HOST NGINX CONFIGURATION:
 #    Configure your host Nginx to proxy to frontend:8080
-#    Example location block:
-#    location / {
-#        proxy_pass http://localhost:8080;
-#        proxy_set_header Host $host;
-#        proxy_set_header X-Real-IP $remote_addr;
-#        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-#        proxy_set_header X-Forwarded-Proto $scheme;
-#    }
+#    See SETUP.md for example configuration
 #
 # 2. SSL TERMINATION:
 #    Handle SSL at host Nginx level, not in Docker containers
-#    Use Let's Encrypt or your preferred SSL certificate provider
+#    Use Let's Encrypt with Certbot for free SSL certificates
 #
 # 3. FIREWALL CONFIGURATION:
-#    Only expose necessary ports on host (80, 443)
-#    Block direct access to Docker ports
+#    Allow only ports 80, 443 externally
+#    Block direct access to port 8080
 #
 # 4. BACKUP STRATEGY:
-#    Regular backups of volumes: erpnext_sites, erpnext_db_data
-#    Test backup restoration procedures regularly
+#    Regular backups of: erpnext_sites, erpnext_db_data
+#    Use: docker compose exec backend bench --site <site> backup --with-files
 #
-# 5. MONITORING:
-#    Monitor container health, resource usage, and logs
-#    Set up alerts for service failures or resource exhaustion
-#
-# 6. UPDATES:
-#    Plan regular updates for security and features
-#    Test updates in staging environment first
-#    Always backup before updating
+# 5. UPGRADES:
+#    v15 to v16: Run bench migrate after updating image versions
+#    Always backup before upgrading
 # =================================================================

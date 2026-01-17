@@ -1,0 +1,27 @@
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "dm_erpnext_utilities"
+version = "0.0.1"
+description = "Utility functions for ERPNext management and customization"
+authors = [
+    {name = "DM-CASA", email = "admin@dmla.tech"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+[project.urls]
+Homepage = "https://github.com/dm-casa/dm_erpnext_utilities"
+
+[tool.bench.dev-dependencies]
