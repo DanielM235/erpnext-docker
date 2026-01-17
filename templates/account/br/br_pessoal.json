@@ -1,0 +1,585 @@
+{
+  "name": "Plano de Contas Pessoal - Brasil",
+  "country_code": "br",
+  "tree": {
+    "1000 - Ativos": {
+      "root_type": "Asset",
+      "1100 - Ativo Circulante": {
+        "root_type": "Asset",
+        "1110 - Caixa e Equivalentes": {
+          "root_type": "Asset",
+          "1111 - Caixa": {
+            "account_type": "Cash",
+            "root_type": "Asset"
+          },
+          "1112 - Banco - Conta Corrente": {
+            "account_type": "Bank",
+            "root_type": "Asset"
+          },
+          "1113 - Banco - Conta Poupança": {
+            "account_type": "Bank",
+            "root_type": "Asset"
+          },
+          "1114 - Banco - Conta Investimentos": {
+            "account_type": "Bank",
+            "root_type": "Asset"
+          },
+          "1115 - Carteira Digital": {
+            "account_type": "Bank",
+            "root_type": "Asset"
+          }
+        },
+        "1120 - Investimentos Curto Prazo": {
+          "root_type": "Asset",
+          "1121 - Tesouro Direto": {
+            "account_type": "Current Asset",
+            "root_type": "Asset"
+          },
+          "1122 - CDB": {
+            "account_type": "Current Asset",
+            "root_type": "Asset"
+          },
+          "1123 - LCI/LCA": {
+            "account_type": "Current Asset",
+            "root_type": "Asset"
+          },
+          "1124 - Fundos de Investimento": {
+            "account_type": "Current Asset",
+            "root_type": "Asset"
+          }
+        },
+        "1130 - Contas a Receber": {
+          "root_type": "Asset",
+          "1131 - Empréstimos Concedidos": {
+            "account_type": "Receivable",
+            "root_type": "Asset"
+          },
+          "1132 - Valores a Receber": {
+            "account_type": "Receivable",
+            "root_type": "Asset"
+          },
+          "1133 - Adiantamentos": {
+            "account_type": "Receivable",
+            "root_type": "Asset"
+          }
+        },
+        "1190 - Outros Ativos Circulantes": {
+          "root_type": "Asset",
+          "1191 - Estoque de Bens": {
+            "account_type": "Stock",
+            "root_type": "Asset"
+          },
+          "1192 - Despesas Pagas Antecipadamente": {
+            "account_type": "Current Asset",
+            "root_type": "Asset"
+          }
+        }
+      },
+      "1200 - Ativo Não Circulante": {
+        "root_type": "Asset",
+        "1210 - Investimentos Longo Prazo": {
+          "root_type": "Asset",
+          "1211 - Ações": {
+            "account_type": "Fixed Asset",
+            "root_type": "Asset"
+          },
+          "1212 - Fundos Imobiliários": {
+            "account_type": "Fixed Asset",
+            "root_type": "Asset"
+          },
+          "1213 - Criptomoedas": {
+            "account_type": "Fixed Asset",
+            "root_type": "Asset"
+          },
+          "1214 - Previdência Privada": {
+            "account_type": "Fixed Asset",
+            "root_type": "Asset"
+          }
+        },
+        "1220 - Imobilizado": {
+          "root_type": "Asset",
+          "1221 - Imóveis": {
+            "account_type": "Fixed Asset",
+            "root_type": "Asset"
+          },
+          "1222 - Veículos": {
+            "account_type": "Fixed Asset",
+            "root_type": "Asset"
+          },
+          "1223 - Móveis e Utensílios": {
+            "account_type": "Fixed Asset",
+            "root_type": "Asset"
+          },
+          "1224 - Equipamentos Eletrônicos": {
+            "account_type": "Fixed Asset",
+            "root_type": "Asset"
+          },
+          "1229 - (-) Depreciação Acumulada": {
+            "account_type": "Accumulated Depreciation",
+            "root_type": "Asset"
+          }
+        }
+      }
+    },
+    "2000 - Passivos": {
+      "root_type": "Liability",
+      "2100 - Passivo Circulante": {
+        "root_type": "Liability",
+        "2110 - Contas a Pagar": {
+          "root_type": "Liability",
+          "2111 - Fornecedores": {
+            "account_type": "Payable",
+            "root_type": "Liability"
+          },
+          "2112 - Contas Domésticas": {
+            "account_type": "Payable",
+            "root_type": "Liability"
+          },
+          "2113 - Cartões de Crédito": {
+            "account_type": "Payable",
+            "root_type": "Liability"
+          }
+        },
+        "2120 - Financiamentos Curto Prazo": {
+          "root_type": "Liability",
+          "2121 - Empréstimos Bancários": {
+            "account_type": "Current Liability",
+            "root_type": "Liability"
+          },
+          "2122 - Cheque Especial": {
+            "account_type": "Current Liability",
+            "root_type": "Liability"
+          }
+        },
+        "2130 - Obrigações Tributárias": {
+          "root_type": "Liability",
+          "2131 - IRPF a Pagar": {
+            "account_type": "Tax",
+            "root_type": "Liability"
+          },
+          "2132 - INSS a Pagar": {
+            "account_type": "Tax",
+            "root_type": "Liability"
+          },
+          "2133 - IPTU a Pagar": {
+            "account_type": "Tax",
+            "root_type": "Liability"
+          },
+          "2134 - IPVA a Pagar": {
+            "account_type": "Tax",
+            "root_type": "Liability"
+          }
+        }
+      },
+      "2200 - Passivo Não Circulante": {
+        "root_type": "Liability",
+        "2210 - Financiamentos Longo Prazo": {
+          "root_type": "Liability",
+          "2211 - Financiamento Imobiliário": {
+            "account_type": "Current Liability",
+            "root_type": "Liability"
+          },
+          "2212 - Financiamento de Veículos": {
+            "account_type": "Current Liability",
+            "root_type": "Liability"
+          },
+          "2213 - Consórcio": {
+            "account_type": "Current Liability",
+            "root_type": "Liability"
+          }
+        }
+      }
+    },
+    "3000 - Patrimônio Líquido": {
+      "root_type": "Equity",
+      "3100 - Capital Próprio": {
+        "account_type": "Equity",
+        "root_type": "Equity"
+      },
+      "3200 - Lucros Acumulados": {
+        "account_type": "Equity",
+        "root_type": "Equity"
+      },
+      "3300 - Resultado do Exercício": {
+        "account_type": "Equity",
+        "root_type": "Equity"
+      }
+    },
+    "4000 - Receitas": {
+      "root_type": "Income",
+      "4100 - Receitas do Trabalho": {
+        "root_type": "Income",
+        "4110 - Salário": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4111 - Horas Extras": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4112 - Comissões": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4113 - Bônus": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4114 - 13º Salário": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4115 - PLR - Participação nos Lucros": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4116 - Férias": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4117 - Vale Alimentação": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4118 - Vale Refeição": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4119 - Vale Transporte": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        }
+      },
+      "4200 - Receitas de Negócio Próprio": {
+        "root_type": "Income",
+        "4210 - Prestação de Serviços": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4220 - Venda de Produtos": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        }
+      },
+      "4300 - Receitas de Investimentos": {
+        "root_type": "Income",
+        "4310 - Dividendos": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4311 - Juros sobre Capital Próprio": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4320 - Rendimentos de Renda Fixa": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4330 - Ganhos com Ações": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4340 - Rendimentos de Fundos Imobiliários": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4350 - Ganhos com Criptomoedas": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        }
+      },
+      "4400 - Receitas de Aluguéis": {
+        "root_type": "Income",
+        "4410 - Aluguel de Imóvel": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4420 - Aluguel de Veículo": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        }
+      },
+      "4900 - Outras Receitas": {
+        "root_type": "Income",
+        "4910 - Pensão Alimentícia Recebida": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4920 - Doações Recebidas": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4930 - Reembolsos": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4940 - Prêmios e Sorteios": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        },
+        "4990 - Receitas Eventuais": {
+          "account_type": "Income Account",
+          "root_type": "Income"
+        }
+      }
+    },
+    "5000 - Despesas": {
+      "root_type": "Expense",
+      "5100 - Despesas com Moradia": {
+        "root_type": "Expense",
+        "5110 - Aluguel": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5120 - Condomínio": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5130 - IPTU": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5140 - Energia Elétrica": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5150 - Água": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5160 - Gás": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5170 - Internet": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5180 - TV por Assinatura": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5190 - Telefone Fixo": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        }
+      },
+      "5200 - Despesas com Alimentação": {
+        "root_type": "Expense",
+        "5210 - Supermercado": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5220 - Restaurantes": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5230 - Lanches e Cafés": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5240 - Delivery": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        }
+      },
+      "5300 - Despesas com Transporte": {
+        "root_type": "Expense",
+        "5310 - Combustível": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5320 - Estacionamento": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5330 - Pedágio": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5340 - Transporte Público": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5350 - Táxi e Aplicativos": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5360 - Manutenção de Veículo": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5370 - IPVA": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5380 - Seguro de Veículo": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5390 - Licenciamento": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        }
+      },
+      "5400 - Despesas com Saúde": {
+        "root_type": "Expense",
+        "5410 - Plano de Saúde": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5420 - Consultas Médicas": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5430 - Exames": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5440 - Medicamentos": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5450 - Odontologia": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5460 - Terapias": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        }
+      },
+      "5500 - Despesas com Educação": {
+        "root_type": "Expense",
+        "5510 - Mensalidade Escolar": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5520 - Mensalidade Universitária": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5530 - Cursos e Capacitação": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5540 - Material Escolar": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5550 - Livros": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        }
+      },
+      "5600 - Despesas Pessoais": {
+        "root_type": "Expense",
+        "5610 - Vestuário": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5620 - Calçados": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5630 - Acessórios": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5640 - Cabeleireiro": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5650 - Cosméticos": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5660 - Academia": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5670 - Telefone Celular": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        }
+      },
+      "5700 - Despesas com Lazer": {
+        "root_type": "Expense",
+        "5710 - Cinema": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5720 - Shows e Eventos": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5730 - Viagens": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5740 - Hobbies": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5750 - Streaming (Netflix, Spotify, etc)": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        }
+      },
+      "5800 - Despesas Financeiras": {
+        "root_type": "Expense",
+        "5810 - Juros de Empréstimos": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5820 - Juros de Cartão de Crédito": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5830 - Juros de Cheque Especial": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5840 - Tarifas Bancárias": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5850 - IOF": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        }
+      },
+      "5900 - Outras Despesas": {
+        "root_type": "Expense",
+        "5910 - Seguros": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5920 - Pensão Alimentícia Paga": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5930 - Doações": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5940 - Presentes": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5950 - Animais de Estimação": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5960 - Serviços Domésticos": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        },
+        "5990 - Despesas Eventuais": {
+          "account_type": "Expense Account",
+          "root_type": "Expense"
+        }
+      }
+    }
+  }
+}

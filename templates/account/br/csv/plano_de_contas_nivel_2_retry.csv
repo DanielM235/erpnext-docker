@@ -1,0 +1,6 @@
+"Nome da Conta","Company","Parent Account","Account Number","Account Type","É grupo","Root Type"
+"Ativo Circulante","DM-CASA","ATIVO - D-CASA","1100","",1,"Asset"
+"Ativo Não Circulante","DM-CASA","ATIVO - D-CASA","1200","",1,"Asset"
+"Passivo Circulante","DM-CASA","PASSIVO - D-CASA","2100","",1,"Liability"
+"Passivo Não Circulante","DM-CASA","PASSIVO - D-CASA","2200","",1,"Liability"
+"Capital","DM-CASA","SUPERÁVIT/DÉFICIT LÍQUIDO DO PERÍODO - D-CASA","3100","Equity",0,"Equity"

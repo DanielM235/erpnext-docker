@@ -54,7 +54,7 @@ cp .env.example .env
 
 # Edit .env with your production values (CRITICAL!)
 nano .env
-# Configure: SITE_NAME, passwords, DOCKER_USER_ID, FRONTEND_PORT, etc.
+# Configure: SITE_NAME, passwords, FRONTEND_PORT, etc.
 ```
 
 #### Step 2: Transfer Files to Server
